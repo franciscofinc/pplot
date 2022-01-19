@@ -1,0 +1,3134 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>PPlot - partioning of populations</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jexcel/1.5.0/js/jquery.jexcel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-csv/0.8.3/jquery.csv.min.js"></script>
+<script src="statistics.js"></script>
+<script src="https://d3js.org/d3-dispatch.v1.min.js"></script>
+<script src="https://d3js.org/d3-selection.v1.min.js"></script>
+<script src="https://d3js.org/d3-drag.v1.min.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+<script type="text/javascript" src="canvas-toBlob.js"></script>
+<script type="text/javascript" src="FileSaver.min.js"></script>
+<script type="text/javascript" src="LinearRegressionSpline.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/8.1.0/math.min.js" integrity="sha512-jZKoHppj8aIM7qVRs9BUkS+YUtEbw7tJ7oKu0+g3rKCzRJyMWzaAdukppHp4ubV3HPxzrG03iExbMTnlbySPKA==" crossorigin="anonymous"></script>
+<script src="browser.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jexcel/1.5.0/css/jquery.jexcel.min.css" type="text/css" />
+<link href="https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300,700" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+<style>
+body {
+    margin: 0;
+        font-family: 'Open Sans', sans-serif;
+    }
+/*    div {
+        border: 1px solid black
+    }*/
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+.dot {
+  stroke: #000;
+}
+.tooltip {
+  position: absolute;
+  width: 200px;
+  height: 28px;
+  pointer-events: none;
+}
+
+button {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 1.2em;
+    cursor: pointer;
+    }
+    
+label {
+    cursor: pointer;
+    }
+    
+.aplicar {
+    font-size: 0.8em;
+    font-weight: bold;
+    border: 0.1em solid ;
+    background-color: white;
+    margin: 0.4em;
+    }
+    
+.aplicar:hover {
+      background-color: #580909;
+    color: white;
+    
+    }
+    
+.seta {
+   font-size: 2em;
+    }
+    
+.seta:hover {
+    color: crimson;
+    cursor: pointer;
+    }
+
+.menu {
+    font-family: 'Open Sans Condensed', sans-serif;
+    background-color: #580909;
+    width: 100%;
+    box-shadow: 2px 0px 13px #868686;
+    position: fixed;
+    top: 0;
+    }
+
+.menu_item {
+    float: left;
+    color: #580909;
+    background-color: #ffffff;
+    padding: 0.35em 0.85em;
+    margin: 0.5em 0 0 1em;
+    font-weight: bold;
+    border-bottom: 0.3em solid #580909;
+    }
+    
+.menu_item:hover {
+    background-color: #c4c4c4;
+    border-bottom: 0.3em solid #c4c4c4;
+    cursor: pointer;
+    }
+    
+.exemplo {
+    border-radius: 1em;
+    border: solid #fff;
+    background-color: #580909;
+    color: #fff;
+    margin: 0.2em 0 0 1em;
+    }
+    
+.exemplo:hover {
+    background-color: dodgerblue;
+    border-bottom: solid #fff;
+    }
+    
+.menu_ativo {
+    border-bottom: 0.3em solid white;   
+    }
+    
+#nome_arquivo {
+    float: left;
+    color: white;
+    padding: 0.35em 0;
+    margin: 0.5em 0 0 1em;
+    font-weight: bold;
+    border-bottom: 0.3em solid #580909;
+    }
+    
+/*.menu {
+    font-family: 'Open Sans Condensed', sans-serif;
+    background-color: #580909;
+    height: 100%;
+    width: 13em;
+    padding-top: 1em;
+    box-shadow: 2px 0px 13px #868686;
+    position: fixed;
+    left: 0;
+    top: 0;
+    }*/
+    
+    
+h2 {
+    font-family: 'Open Sans Condensed', sans-serif;
+    color: #580909;
+    margin-top: 0.15em;
+    margin-bottom: 0.15em;
+    }
+    
+input, select {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 1em;
+    }
+
+
+    
+.conteudo {
+    font-family: 'Open Sans', sans-serif;
+    margin: 3.5em 1em;
+    }
+
+.col_esq{
+     float: left   
+    }
+    
+.col_dir{
+     float: right
+    }
+
+.aviso {
+    padding: 0.3em 0.6em;
+    border: 0.1em solid rgb(0, 0, 0);
+    border-radius: 0.7em;
+    margin-bottom: 0.4em;
+    max-width: 60em;
+    display: none;
+}
+
+.vermelho {
+    background-color: rgba(230, 187, 187, 0.35);
+    color: brown;
+    border-color: brown
+    }
+    
+.verde {
+    background-color: rgba(173, 234, 173, 0.35);
+    color: darkgreen;
+    border-color: darkgreen;
+    }
+    
+.azul {
+    background-color: rgba(165, 157, 214, 0.35);
+    color: darkslateblue;
+    border-color: darkslateblue;
+    }
+    
+.amarelo {
+    background-color: rgba(255, 140, 0, 0.35);
+    color: #9e5700;
+    border-color: #9e5700;
+    }
+
+.btn_aviso {
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    }
+    
+#tab {
+        margin-bottom: 1em;
+    }
+thead {
+    font-weight: bold;
+    }
+
+.inflexão {
+    stroke-width: 0.1em;
+    stroke: steelblue;
+    }
+    
+.inflexão:hover {
+    stroke-width: 0.25em;
+    cursor: ew-resize;
+    }
+    
+.inflexão_valor {
+    width: 5em;
+    }
+    
+.selecionado {
+    stroke: red;
+    }
+    
+line {
+    stroke: #555555;
+    }
+    
+.outliers {
+    stroke: black;
+    }
+    
+.pop:hover {
+    border: 1em solid black;
+    stroke: black; 
+    cursor: ns-resize;
+    }
+    
+.conjunto {
+    color: black;
+    font-weight: 1000;
+    fill: black;
+    stroke-width: 0.25em;
+    stroke: black;
+    }
+    
+.pop_1 {
+    color: crimson;
+    font-weight: 1000;
+    fill: crimson;
+    stroke-width: 0.25em;
+    stroke: crimson;
+    }
+
+.pop_2 {
+    color: green;
+    font-weight: 1000;
+    fill: green;
+    stroke-width: 0.25em;
+    stroke: green;
+    }
+.pop_3 {
+    color: darkorange;
+    font-weight: 1000;
+    fill: darkorange;
+    stroke-width: 0.25em;
+    stroke: darkorange;
+    }
+.pop_4 {
+    color: blueviolet;
+    font-weight: 1000;
+    fill: blueviolet;
+    stroke-width: 0.25em;
+    stroke: blueviolet;
+    }
+.pop_5 {
+    color: deeppink;
+    font-weight: 1000;
+    fill: deeppink;
+    stroke-width: 0.25em;
+    stroke: deeppink;
+    }
+.pop_6 {
+    color: gold;
+    font-weight: 1000;
+    fill: gold;
+    stroke-width: 0.25em;
+    stroke: gold;
+    }
+.pop_7 {
+    color: gray;
+    font-weight: 1000;
+    fill: gray;
+    stroke-width: 0.25em;
+    stroke: gray;
+    }
+.pop_8 {
+    color: blue;
+    font-weight: 1000;
+    fill: blue;
+    stroke-width: 0.25em;
+    stroke: blue;
+    }
+    
+.boxplot {
+    stroke-width: 0.12em;    
+    }
+    
+.bar rect {
+    /*fill: rgb(136, 159, 136);*/
+    stroke: white;
+    }
+    
+table, th, td {
+    border-collapse: collapse;
+    }
+    
+table {
+    border: 1px solid gray;
+    margin-top: 0.4em;
+    }
+
+th {
+    background-color: rgba(211, 211, 211, 0.31);
+    }
+    
+th, td {
+    padding: 0.2em;
+}
+    
+#subpopulações th, #subpopulações td {
+    padding: 0.2em 0.4em;
+    border: 1px solid gray;
+    text-align: center
+    }
+    
+table#resumo {
+    border: 1px solid gray;
+    margin-right: 1em;
+    }
+    
+table#resumo td {
+    border-bottom: 1px solid #efefef;
+    border-left: 1px solid #efefef;
+    text-align: center
+    }
+
+table#resumo th {
+    max-width: 10em
+    }
+    
+table#resumo tr.dados:hover {
+    background-color: #ebd5d5
+    }
+    
+table#resumo, table#resumo th, table#resumo td {
+    }
+    
+.progress {
+    display: inline-block;
+    width: 20em;
+    height: 1.5em;
+    border: 0.1em solid black;
+    border-radius: 0.5em;
+    background: gray;
+    text-align: center;
+    margin: 0.4em 0;
+}
+
+.bar {
+    border-radius: 0.5em;
+    width: 0%;
+    height: 100%;
+}
+
+.aztec {
+    background-color: #580909;
+}
+    
+.xx {
+    width: 6em;
+    }
+    
+.neg_verm {
+        color: red;
+        font-weight: bold;
+    }
+    
+img.icone {
+        height: 1.5em;
+        vertical-align: middle;
+    }
+
+img.salvar {
+    height: 1.3em;
+    vertical-align: middle;
+    opacity: 0.4
+    }
+    
+img.salvar:hover {
+    opacity: 1;
+    cursor: pointer;
+    }
+    
+.probableinflections:hover {
+    cursor:pointer;
+    box-shadow: box-shadow: 0px 0px 10px #818181;
+    }
+    
+.processando{
+    opacity:0.8;
+    background-color:#000000;
+    position:fixed;
+    width:100%;
+    height:100%;
+    top:0px;
+    left:0px;
+    z-index:1000;
+    color: white;
+    font-size: 1em;
+    text-align: center;
+    display: none;
+}
+    
+</style>
+    
+</head>
+<body>
+<!-- TELA DE ABERTURA --> 
+
+    
+ <div id="inicio" style="height: 100%; text-align: center; display: flex; background-color: #ededed">
+    <div style="position: relative; margin: auto; padding: 1em;box-shadow: 0px 0px 10px #818181;border-radius: 0.2em; background-color: white">
+    <div style="text-align: center;">
+    Welcome to   
+ <h2 style="font-size: 3.5em">PPlot</h2>   
+    a webapp designed for the partioning of multi-population geochemical datasets
+        
+        <p><button onclick="$('#inicio,#restante').toggle();">ENTER</button></p>
+        
+        <p>Developed by</p>
+        <div style="display: flex">
+        <p style="overflow: auto; margin: auto">
+        <span style="vertical-align: middle; float: left">
+            Francisco Ferreira de Campos<br><small>(Geological Survey of Brazil)
+            <br><img class="icone" src="email.png">francisco.campos@cprm.gov.br
+            <a href="http://lattes.cnpq.br/7170689840423636" target="_blank" style="text-decoration: none;color: black; padding-left: 0.5em"><img class="icone" src="lattes.png"> <tx class="tx" lg="8">Lattes</tx></a>
+            </small>  
+        </span>
+        <span  style="vertical-align: middle; float: left; padding: 0 1em; line-height: 3.5em">and</span>
+        
+        <span style="vertical-align: middle; float: left">
+            Otavio Augusto Boni Licht<br><small>(PPGG - Federal University of Paraná)
+            <br><img class="icone" src="email.png">otavio.licht@gmail.com
+            <a href="http://lattes.cnpq.br/0615642445874455" target="_blank" style="text-decoration: none;color: black; padding-left: 0.5em"><img class="icone" src="lattes.png"> <tx class="tx" lg="8">Lattes</tx></a>
+            </small>
+        </span>
+            
+        <span  style="vertical-align: middle; float: left; padding: 0 1em; line-height: 3.5em">and</span>
+        
+        <span style="vertical-align: middle; float: left">
+            Nivaldo Benedito Ferreira Campos<br><small>(Federal University of Bahia)
+            <br><img class="icone" src="email.png">campos.nivaldo@ufba.br
+            <a href="http://lattes.cnpq.br/7181676570250454" target="_blank" style="text-decoration: none;color: black; padding-left: 0.5em"><img class="icone" src="lattes.png"> <tx class="tx" lg="8">Lattes</tx></a>
+            </small>
+        </span>
+        </p>
+                </div>
+
+        
+        <p>
+    
+    </p>
+    <p>When using this application, please cite as: ______________________________________________</p>
+</div>
+
+        
+    </div>
+</div>   
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+<div id="restante" style="display: none">    
+<div class="menu" >
+    <input type="file" id="abrir_arquivo" style="display:none" accept=".json" onchange="loadFile()">
+    <div class="menu_item" tela="abrir" id="arquivoSelect">OPEN...</div>
+    <div class="menu_item" tela="salvar">SAVE AS...</div>
+    <div class="menu_item menu_ativo" tela="carregar_dados">LOAD DATA</div>
+    <div class="menu_item" tela="graficos">PLOTS</div>
+    <div class="menu_item" tela="tabela_resumo">SUMMARY TABLE</div>
+    <div id="nome_arquivo"></div>
+    <div class="menu_item exemplo" tela="exemplo">View usage example!</div>
+</div>
+    
+<div class="conteudo">
+<div class="processando"><div style="margin: auto;">Processing... please wait.<br><br><img src="carregando.gif" style="height: 3em"></div></div>
+<!-- TELA CARREGAR DADOS--> 
+    <div id="carregar_dados">    
+    <h2>LOAD DATA</h2>
+    <div class="col_esq">
+    Paste data in the table below, a column for each variable and a row for each sample.<br>
+<!--    Cole os dados na tabela, cada coluna sendo um elemento e cada linha uma amostra.<br>-->
+    The table resizes automatically.<br>
+<!--    A tabela ajusta de tamanho automaticamente.<br>-->
+        
+        
+    <input type="file" id="fileElem" style="display:none" onchange="handleFiles(this.files)"><br>
+    <button id="fileSelect">Add CSV file</button> <tx>Separator:</tx> <input id="separador" type="text" value=";" size="1" style="text-align: center; font-weight: bold"> <span id="arquivo_selecionado"></span>
+    <br>
+    <br> 
+    The first row may contain the variable name.
+<!--    A primeira linha pode conter o nome do elemento.-->
+    <br>
+    <label><input id="primeiraLinha" type="checkbox">Use first row as header</label><br>
+    <tx>Code for <em>missing data </em>:</tx> <input id="missing_data" type="text" size="7" style="text-align: center;"><br>
+    <button onclick="validarTabela()">1) Validate table</button><br><br>
+    <button onclick="dadosTabela()">2) Process data table</button><br><br>
+    </div>
+    
+        
+<!-- AVISOS DA VALIDAÇÃO-->
+    <div class="col_esq" style="margin-left: 2em">
+    <p style="margin: 0">Check warnings before proceeding:</p> 
+<!--    <p style="margin: 0">Verifique os avisos antes de prosseguir:</p> -->
+<!--    <div class="progress">
+            <span id="progresso" style="width: 20em; color: white; font-weight: bold; float: left">0%</span>
+            <div class="bar shadow aztec"></div>
+    </div>-->
+        
+<!--    <div id="av_sucesso" class="aviso verde">SUCESSO: Não foram encontrados erros de validação.
+        <span class="btn_aviso não">OK</span></div>
+        
+    <div id="av_cabeçalho" class="aviso vermelho">Usar primera linha como cabeçalho?
+        <span class="btn_aviso sim">SIM</span> • 
+        <span class="btn_aviso não">NÃO</span></div>
+        
+    <div id="av_virgula" class="aviso azul">Transformar o separador decimal para ponto? 
+        <span class="btn_aviso sim">SIM</span> • 
+        <span class="btn_aviso não">NÃO</span></div>
+        
+    <div id="av_LD" class="aviso amarelo">Transformar &lt; LD em metade do LD? 
+        <span class="btn_aviso sim">SIM</span> • 
+        <span class="btn_aviso não">NÃO</span></div>
+    </div>-->
+        
+    <div id="av_sucesso" class="aviso verde">SUCESS: No validation errors were found.
+        <span class="btn_aviso não">OK</span></div>
+        
+    <div id="av_cabeçalho" class="aviso vermelho">Use first line as header?
+        <span class="btn_aviso sim">YES</span> • 
+        <span class="btn_aviso não">NO</span></div>
+        
+    <div id="av_virgula" class="aviso azul">Replace the decimal separator to point? 
+        <span class="btn_aviso sim">YES</span> • 
+        <span class="btn_aviso não">NO</span></div>
+        
+    <div id="av_LD" class="aviso amarelo">Replace &lt; LD to half of LD? 
+        <span class="btn_aviso sim">YES</span> • 
+        <span class="btn_aviso não">NO</span></div>
+    </div>
+<!-- AVISOS DA VALIDAÇÃO-->  
+    
+
+    <div id="tab" style="margin-top: 0.5em; width: 100">
+        
+    </div>
+        
+    </div>
+
+<!-- TELA GRÁFICOS--> 
+    <div id="graficos" style="display: none; overflow: auto">
+        <h2>PLOTS</h2>
+        <div class="col_esq">
+            <div>
+            <div style="float: left">    
+                Element: <select id="selecionar_elemento"></select>
+                <span class="seta" onclick="seta_elem('anterior')"> ← </span><span class="seta" onclick="seta_elem('próximo')"> → </span><br>
+                <label><input id="distLogNormal" type="checkbox" checked>Log distribution</label>
+                <br>
+
+                <table style="min-width: 55%">
+                    <tr>
+                        <td>n</td>
+                        <td><span id="n"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Mean</td>
+                        <td><span id="média"></span></td>
+                    </tr>
+                    <tr>
+                        <td>Std. Deviation</td>
+                        <td><span id="dp"></span></td>
+                    </tr>
+                </table>
+
+                <br>
+
+<!--                <small><b>Clique no gráfico para definir o(s) ponto(s) de <br>inflexão. Após definido(s) é possivel alterá-lo(s)<br>arrastando com o mouse.</b></small>-->
+                <small><b>Click on the plot to define the inflection point(s).<br>After defined, the inflection point(s) can be<br>altered by dragging with the mouse cursor.</b></small>
+                <br>
+
+                # of subpopulations <input id="n_subpop" type="number" value="2" step="1" min="1" max="15" width="1" style="text-align: center"><button class="aplicar" onclick="gerarVagasSubpopulação()">Apply</button><br>
+
+                <div id="inflexões" style="width: 12em; ">
+    <!--            Inflexão: <input class="xx" id="inflexão_valor" type="number"><br>-->
+                </div>
+<!--                <button class="aplicar" onclick="inflexoes_automaticas()">Inflexões automáticas</button>-->
+<!--                <input id="interações" type="number" value="1" step="1" min="1" max="15" width="1" style="text-align: center">
+                <button class="aplicar" onclick="otimizar_com_gráfico($('#interações').val()*1)">Otimizar populações</button>-->
+                <button class="aplicar" onclick="varredura()">Automatic evaluation</button>
+                <br><button class="aplicar" onclick="otimizar_com_gráfico()">Optimize subpopulations</button>
+                <div style="clear: left">Fit error: <span class="xx" id="erro_ajuste"> --------</span></div>
+
+                <small>After the inflection points are defined, the<br>generated subpopulations can be manually<br>adjusted by vertically dragging then (adjusting<br>the mean value) or dragging with the Ctrl key<br>pressed (adjusting the standard deviation)</small>
+<!--                <small>Após definidas as inflexões, é possível ajustar as <br>subpopulações no gráfico arrastando-as <br>verticalmente (ajusta a média) ou arrastando-as <br>com a tecla Ctrl pressionada (ajusta o desvio padrão)</small>-->
+                <h2>P-P Plot<img class="salvar" grafico="prob_plot" src="save.png"  title="Download plot (.svg)"></h2>
+            </div>
+                 
+              <span id="prob_plot"></span>
+            </div>
+            <div id="subpopulações" style="float: left; margin-right: 0.4em">
+                <table>
+                    <thead>
+                        <tr>
+                            <th rowspan="2"></th>
+                            <th colspan="2">Domains (2σ)</th>
+                            <th rowspan="2">n (%)</th>
+                            <th rowspan="2">Mean</th>
+                            <th rowspan="2">Std. Deviation (1σ)</th>
+                        </tr>
+                        <tr>
+                            <th>From</th>
+                            <th>To</th>
+                        </tr>
+                    </thead>
+                    <tbody id="subpopulações_tabela">
+                        <!--Aqui entram as caixas das subpopulações na quantidade que o usuário escolher e os resptivos domínios-->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        
+
+        
+        <div style="">
+            <div style="max-width: 640px; float: left; padding-left: 1em">
+                <h2>Histogram <img class="salvar" grafico="hist_plot" src="save.png"  title="Download plot (.svg)"></h2>
+                    <div style="float: left">Classification:</div>
+                    <div style="float: left; margin-left: 0.2em">
+                        <span>
+                            Fraction of the std. deviation:
+                            <select id="frações_dp">
+                                <option value="0.5">1/2 sd</option>
+                                <option value="0.25" selected>1/4 sd</option>
+                                <option value="0.125">1/8 sd</option>
+                                <option value="0.0625">1/16 sd</option>
+                            </select><br>
+                        </span>
+                        <span>
+                            <label style="vertical-align: middle;" for="slider"># of classes: </label>
+                            <input style="vertical-align: middle;" type="range" min="2" max="30" class="slider" id="slider">
+                            <span style="vertical-align: middle;" id="num_slider"></span><br>
+                        </span>
+                        <label><input id="usar_hist" type="checkbox">Use histogram classes in the P-P plot</label>
+                    </div>    
+                            <div style="float: left">
+                <div id="hist_plot"></div> 
+            </div>   
+            </div>
+
+            <div style="float: left;padding-left: 1em">
+                <h2>Box-plot <img class="salvar" grafico="box_plot" src="save.png" title="Download plot (.svg)"></h2>
+                <span id="box_plot" class="col_dir"></span>
+            </div>
+        </div>
+
+        
+        
+                  
+
+        
+    </div>
+
+<!--TELA TABELA RESUMO    -->
+    <div id="tabela_resumo" style="display: none">
+    <h2>SUMMARY TABLE</h2>
+    <table id="resumo">
+        <col/>
+        <tr>
+            <th>Element</th>
+            <th>Transformation</th>
+            <th>Lower limit</th>
+            <th>Detection</th>
+            <th>Below detection limit (%)</th>
+            <th>Variation coeff. (%)</th>
+            <th>Mean</th>
+            <th>Minimun</th>
+            <th>1st Quartile</th>
+            <th>Median</th>
+            <th>3rd Quartile</th>
+            <th>2nd Order Threshold (Q3+1,5[Q3-Q1])</th>
+            <th>1st Order Threshold (Q3+3[Q3-Q1])</th>
+            <th>Maximum</th>
+            <th>UCC¹</th>
+        </tr>
+<!--        <tr>
+            <th>Elemento</th>
+            <th>Transformação</th>
+            <th>Limite Inf.</th>
+            <th>Grau de detecção</th>
+            <th>Abaixo do LD (%)</th>
+            <th>Coeficiente de Variação (%)</th>
+            <th>Média</th>
+            <th>Mínimo</th>
+            <th>1° Quartil</th>
+            <th>Mediana</th>
+            <th>3° Quartil</th>
+            <th>Limiar de 2° Ordem (Q3+1,5[Q3-Q1])</th>
+            <th>Limiar de 1° Ordem (Q3+3[Q3-Q1])</th>
+            <th>Máximo</th>
+            <th>UCC¹</th>
+        </tr>-->
+    </table>
+    <p><small>¹Compositional data of the upper continental crust (UCC) from <em>RUDNICK, R. L.; GAO, S. Composition of the Continental Crust. In: RUDNICK, R. L. (ed.) The Crust, vol. 3, Treatise on geochemistry (eds: Holland, H.D., Turekian, K.K.), Pergamon.</em></small></p>
+<!--    <p><small>¹Dados composicionais da crosta continental superior (UCC) de <em>RUDNICK, R. L.; GAO, S. Composition of the Continental Crust. In: RUDNICK, R. L. (ed.) The Crust, vol. 3, Treatise on geochemistry (eds: Holland, H.D., Turekian, K.K.), Pergamon.</em></small></p>-->
+    
+    </div>
+    
+    
+    
+    
+</div>
+</div>    
+<script type="text/javascript">
+
+//MENU
+$(".menu_item").on( "click", function() {
+    $(".menu_item").removeClass("menu_ativo")
+    $(this).addClass("menu_ativo")
+    switch ($(this).attr("tela")){
+        case "salvar":
+            salvar_como();
+            break;
+        case "abrir":
+            break;
+        case "graficos":
+            $(".conteudo").children().hide();
+            $("#" + $(this).attr("tela")).show();
+            abrir_elemento()
+            break;
+        case "exemplo":
+            $.get("Datasets paper.json",abrir_arquivo);
+            break;
+        case "tabela_resumo":
+            $(".conteudo").children().hide();
+            $("#" + $(this).attr("tela")).show();
+            gerarTabelaResumo();
+        default:
+            $(".conteudo").children().hide();
+            $("#" + $(this).attr("tela")).show();
+    }
+});
+
+    
+/*
+PARA FAZER
+
+- validação ao carregar os dados ( 1. teste do texto
+                                                    )
+
+*/
+var dados_teste = [["Área", "Volume", "Área 2", "Volume 2"],["0.65", "0.00972", "1.25", "0.018696"],["0.63", "0.0095175", "3.00", "0.0179775"],["1.65", "0.0247455", "0.39", "0.00581625"],["1.08", "0.00648", "1.08", "0.00648"],["1.07", "0.016074", "1.07", "0.016074"],["1.25", "0.018696", "1.25", "0.018696"],["3.00", "0.0179775", "3.00", "0.0179775"],["0.39", "0.00581625", "0.39", "000581625"]]
+  
+//var dados_teste = []
+
+//Inicializar tabela de dados
+$("#tab").jexcel({
+    //data: dados_teste,
+    minDimensions: [1,5],
+    /*csv: "cu.csv",
+    csvHeaders: true,*/
+});
+  
+
+    
+//Iniciar tabela a partir de CSV
+var fileSelect = document.getElementById("fileSelect"),
+    fileElem = document.getElementById("fileElem"),
+    fileList = document.getElementById("fileList");
+
+window.URL = window.URL || window.webkitURL;
+
+fileSelect.addEventListener("click", function (e) {
+  if (fileElem) {
+    fileElem.click();
+  }
+  e.preventDefault();
+}, false);
+
+function handleFiles(files) {
+  if (files.length) {
+      $("#arquivo_selecionado").html(files[0].name);
+      $.csv.defaults.separator = $("#separador").val();
+      var csv_file = window.URL.createObjectURL(files[0]);
+      $('#tab').jexcel({
+        csv: csv_file,
+        csvHeaders:false,
+      })
+    $("#fileElem").val("");
+  }
+}
+    
+    
+//Colocar ou remover primeira linha como cabeçalho
+function linha_para_cabeçalho(opção) {
+    aguarde_processando(true)
+    setTimeout(function(){
+        var dados = $("#tab").jexcel('getData', false);
+        var numCols = dados[0].length;
+        var largCols = []
+        if (opção){
+            var cabeçalhos = dados[0];
+            dados.splice(0,1);
+            for (i = 0; i < numCols; i++) {
+                largCols.push($("#tab").jexcel('getWidth', i))
+            }
+            $("#tab").jexcel('destroy');
+            $("#tab").jexcel({
+                data: dados,
+                colHeaders: cabeçalhos,
+                colWidths: largCols
+            });
+
+            if ($('#av_cabeçalho').is(':visible')){
+                $("#av_cabeçalho").hide(200);
+                }
+        } else {
+            var primeiraLinha = [];
+            for (i = 0; i < numCols; i++) {
+                primeiraLinha.push($("#tab").jexcel('getHeader', i))
+                largCols.push($("#tab").jexcel('getWidth', i))
+            }
+            console.log(primeiraLinha)
+            dados.splice(0,0,primeiraLinha);
+            $("#tab").jexcel('destroy');
+            $("#tab").jexcel({
+                data: dados,
+                colWidths: largCols
+            });
+        }    
+        aguarde_processando(false)
+    }, 20)
+}
+    
+    
+$("#primeiraLinha").change(function() {
+    linha_para_cabeçalho($(this).is(":checked"));
+});
+    
+//Validar os dados da tabela
+function validarTabela(){
+    var tabela = $('#tab').jexcel('getData', false);
+    var n_col = tabela[0].length; //número de colunas
+    //var n_lin = tabela.lenght; //número de linhas
+    var tem_virgula = false;
+    var tem_LD = false;
+    var tem_cabeçalho = false;
+    
+    //Checar se tem cabeçalho
+    var x = 0;
+    var n = 0;
+    do {
+        console.log("Checando cabeçalho coluna " + x);
+        if (isNaN(tabela[0][x]) && isNaN(tabela[0][x].replace(",","."))) {
+            console.log(tabela[0][x] + " é texto");
+            n++
+        };
+        x++
+    }
+    while (n < 4 && x < n_col)
+    if (n >= 1) {
+        console.log("Tabela possui cabeçalho;")
+        tem_cabeçalho = true
+        $("#av_cabeçalho").show(200);
+    }
+     
+    //Checar se tem vírgulas
+ /*   tabela.map(function (linha,y) {
+        var i;
+        for (i = 0; i < linha.length; i++) {
+            if (isNaN(linha[i])) {
+                console.log("Checando linha " + y + " e coluna " + i)
+                if (!isNaN(linha[i].replace(",","."))) {
+                    console.log(linha[i] + " tem vírgula");
+                    tem_virgula = true;
+                    break;
+                }
+            }
+        }
+        if (tem_virgula) {
+            console.log("Tabela possui vírgula na linha " + y);
+            $("#av_virgula").show(200);
+            break;
+        } else {
+            //console.log("Tabela não possui vírgula na linha " + y);
+        }
+    }
+    )*/
+    var y;
+    for (y = 0; y < tabela.length; y++) {
+        var linha = tabela[y];
+        console.log(y)
+        var i;
+        for (i = 0; i < linha.length; i++) {
+            if (isNaN(linha[i])) {
+                console.log("Checando linha " + y + " e coluna " + i)
+                if (!isNaN(linha[i].replace(",","."))) {
+                    console.log(linha[i] + " tem vírgula");
+                    tem_virgula = true;
+                    break;
+                }
+            }
+        }
+        if (tem_virgula) {
+            console.log("Tabela possui vírgula na linha " + y);
+            $("#av_virgula").show(200);
+            break;
+        } else {
+            //console.log("Tabela não possui vírgula na linha " + y);
+        }
+    }
+    
+    //Checar se tem < LD
+    for (y = 0; y < tabela.length; y++) {
+        var linha = tabela[y];    
+        var i;
+        for (i = 0; i < linha.length; i++) {
+            if (isNaN(linha[i])) {
+                console.log("Checando linha " + y + " e coluna " + i)
+                if (linha[i].indexOf("&lt;") !== -1) {
+                    console.log(linha[i] + " tem < LD");
+                    tem_LD = true;
+                    break;
+                }
+            }
+        }
+        if (tem_LD) {
+            console.log("Tabela possui < LD na linha " + y);
+            $("#av_LD").show(200);
+            break;
+        } else {
+            //console.log("Tabela não possui < LD na linha " + y);
+        }
+    }
+    
+    //Remover linhas em branco
+        var linhas_vazias = [];
+        tabela.map(function (y, i) {
+            //console.log("VAZIO: Checando linha " + i);
+            var vazio = [];
+            y.map(function (x) {
+                if (x == "") {vazio.push(x)}
+            })
+            if (vazio.length == y.length) {
+                console.log("VAZIO: Linha " + i + " está vazia.");
+                linhas_vazias.unshift(i)
+            }
+        });
+        linhas_vazias.map(function(i){
+                console.log("VAZIO: Linha " + i + " removida.");
+                $('#tab').jexcel('deleteRow', i);
+        })
+    
+    
+    if (!tem_cabeçalho && !tem_LD && !tem_virgula) {
+        $("#av_sucesso").show(200);
+    }
+}
+    
+//Resposta NÃO pra validação
+$(".não").on( "click", function() {
+   console.log("Clique não em " + $(this).parent().attr("id"))
+   $(this).parent().hide(200); 
+});
+    
+
+var LDs = {}
+//Resposta SIM pra validação
+$(".sim").on( "click", function() {
+   var ação = $(this).parent().attr("id");
+   switch (ação) {
+       case "av_cabeçalho":
+            linha_para_cabeçalho(true);
+            $('#primeiraLinha').prop('checked',true);
+            break;
+       case "av_LD":
+            var tabela = $('#tab').jexcel('getData', false);
+            var cabeçalhos = []
+            for (z = 0; z < tabela[0].length; z++) {cabeçalhos.push($('#tab').jexcel('getHeader', z))}
+            barra_progresso(0)
+           aguarde_processando(true)
+            setTimeout(function(){
+                fran.postMessage({
+                    ação: "LD",
+                    tabela: tabela,
+                    cabeçalhos: cabeçalhos,
+                }) 
+            }, 20)
+
+            /*var y;
+            var cabeçalhos = []
+            for (z = 0; z < tabela[0].length; z++) {cabeçalhos.push($('#tab').jexcel('getHeader', z))}
+            console.log(cabeçalhos)
+            for (y = 0; y < tabela.length; y++) {
+                var linha = tabela[y];
+                var i;
+                for (i = 0; i < linha.length; i++) {
+                    if (isNaN(linha[i])) {
+                        if (linha[i].indexOf("&lt;") !== -1) {
+                            console.log(linha[i] + " tem < LD");
+                            
+                            var elem = cabeçalhos[i]
+                            !LDs[elem] && (LDs[elem] = {})
+                            LDs[elem].valor = linha[i]
+                            LDs[elem].n = (LDs[elem].n || 0) + 1 
+                            tabela[y][i] = linha[i].replace("&lt;","").replace(",",".")/2
+                            console.log(linha[i] + " -> LD/2");
+                            
+                        }
+                    }
+                }
+            }
+            $('#tab').jexcel('setData', tabela, true);*/
+            $(this).parent().hide(200);
+            break;
+       case "av_virgula":
+            var tabela = $('#tab').jexcel('getData', false);
+            barra_progresso(0)
+            $(this).parent().hide();
+           aguarde_processando(true)
+           setTimeout(function(){
+                fran.postMessage({
+                    ação: "virgula",
+                    tabela: tabela,
+                })
+           }, 20)
+
+            /*for (y = 0; y < tabela.length; y++) {
+                var linha = tabela[y];
+                var i;
+                for (i = 0; i < linha.length; i++) {
+                    if (isNaN(linha[i])) {
+                        console.log("Checando linha " + y + " e coluna " + i);
+                        tabela[y][i] = linha[i].replace(",",".")
+                        console.log(linha[i] + " -> separador corrigido");
+                    }
+                }
+            }
+           $('#tab').jexcel('setData', tabela, true);*/
+
+           break;
+       default:
+           return
+   }
+});
+
+</script>
+
+<!-- Javascript Estatística -->
+<script type="text/javascript">
+    var estat;
+    var dados_stat = []; //array
+    var dados_stat_manipulados = {}; //object
+    var metadados = [];
+    var populações = {};
+    var missing_data = "";
+    
+//INICIAR UM BANCO DE DADOS PARA O STATISTICA.JS
+    function dadosTabela() {
+        dados_stat = [];
+        metadados = [];
+        dados_stat_manipulados = {};
+        var tabela = $('#tab').jexcel('getData', false);
+        var n_col = tabela[0].length; //número de metadados
+        //var n_lin = tabela.length; //número de linhas
+        missing_data = $("#missing_data").val()
+        var cabeçalhos = [];
+        var i = 0;
+        for (i = 0; i < n_col; i++) {
+            var x = $('#tab').jexcel('getHeader', i).replace('<span class="arrow-up"></span>','').replace('<span class="arrow-down"></span>','')
+            cabeçalhos.push(x)
+            metadados[x] = {
+                scale: "metric"
+            };
+        }
+        console.log(cabeçalhos)
+        tabela.map( function (linha) {
+            console.log("Lendo linha " + linha);
+            var amostra = {};
+            linha.map( function(valor, coluna) {
+                console.log("Lendo coluna " + coluna + " com valor: " + valor);
+                var elemento = cabeçalhos[coluna];
+                if (valor != missing_data) {
+                    amostra[elemento] = Number(valor);
+                }
+            });
+            dados_stat.push(amostra);
+        });
+        console.log(dados_stat)
+
+                
+var settings = {
+    epsilon: 1e-12,
+	zTableIterations: 50
+};
+
+        
+        
+        estat = new Statistics(dados_stat, metadados, settings);
+        $("#selecionar_elemento").empty();
+        cabeçalhos.map(function(x){$("#selecionar_elemento").append("<option value='" + x + "'>" + x + "</option>");
+                                   let y = estat.getColumn(x).filter(Number)
+                                   console.log("Média " + x + ": " + estat.mean(y))
+                                   !dados_stat_manipulados[x] && (dados_stat_manipulados[x] = {});
+                                   dados_stat_manipulados[x]["média"] = estat.mean(y);
+                                   dados_stat_manipulados[x]["desviopadrão"] = estat.standardDeviation(y);
+                                   dados_stat_manipulados[x]["n"] = y.length;
+                                   dados_stat_manipulados[x]["max"] = estat.maximum(y);
+                                   dados_stat_manipulados[x]["min"] = estat.minimum(y); 
+                                   dados_stat_manipulados[x]["CV"] = estat.coefficientOfVariation(y)*100;
+                                   dados_stat_manipulados[x]["q25"] = estat.quantile(y, 0.25);
+                                   dados_stat_manipulados[x]["q75"] = estat.quantile(y, 0.75);
+                                   dados_stat_manipulados[x]["mediana"] = estat.quantile(y, 0.5);
+                                   dados_stat_manipulados[x]["IQR"] = estat.interQuartileRange(y);
+                                   dados_stat_manipulados[x]["limiar_2ordem"] = dados_stat_manipulados[x].q75 + 1.5*dados_stat_manipulados[x].IQR;
+                                   dados_stat_manipulados[x]["limiar_1ordem"] = dados_stat_manipulados[x].q75 + 3*dados_stat_manipulados[x].IQR;
+                                   dados_stat_manipulados[x].limite_inf = LDs[x] && LDs[x].valor
+                                   dados_stat_manipulados[x].abaixo_LD = (LDs[x] && LDs[x].n) || 0
+                                   dados_stat_manipulados[x].grau_detecção = (dados_stat_manipulados[x]["n"] - dados_stat_manipulados[x].abaixo_LD) + "/" + dados_stat_manipulados[x]["n"]
+                                  });
+        console.log(dados_stat_manipulados);
+        //window.alert('Dados processados com sucesso. Clique na opção "Gráficos" no menu lateral')
+        window.alert('Data successfully processed. Choose the "PLOTS" option in the upper menu to continue.')
+    }
+
+//Juntar dois arrays num sistema [[x,y][x,y]...[x,y]]
+function juntar_arrays(x,y) {return y.map(function(y,i) {return [x[i], y]})}
+
+//Elemento selecionado na janela "Gráficos"
+var elemSelec = function() {return $("#selecionar_elemento").val()};
+var elem = function() {return dados_stat_manipulados[elemSelec()]}
+    
+//CALCULAR GRÁFICO DE PROBABILIDADE
+var probNormal = function(dado) {var n = dado.length; return dado.map(function(x,i) {return estat.probit((i+1-0.375)/(n+0.25))});}
+
+//TROCAR ELEMENTO
+$("#selecionar_elemento").change(function() {
+    abrir_elemento()
+});
+    
+function seta_elem(sentido) {
+    if (sentido == "próximo") {
+        var opção = $("#selecionar_elemento").children(":selected").next().val()    
+    } else {
+        var opção = $("#selecionar_elemento").children(":selected").prev().val()
+    }
+    opção && $("#selecionar_elemento").val(opção) && abrir_elemento();
+}
+
+//LOG-TRANSFORMAR DADOS
+$("#distLogNormal").change(function() {
+    //var elem = dados_stat_manipulados[elemSelec()]
+    if ($("#distLogNormal").is(":checked")){
+        elem().distribuição = "log"
+        elem().dados = estat.sort(estat.getColumn(elemSelec()).map(Math.log10).filter(Number),"desc");
+    } else {
+        elem().distribuição = "original"
+        elem().dados = estat.sort(estat.getColumn(elemSelec()).filter(Number),"desc");
+    }
+    elem().histograma_classes = undefined
+    elem().dados_classes_hist = undefined
+    //delete populações[elemSelec()]
+    abrir_elemento()
+});
+    
+function abrir_elemento() {
+    $(".xx").val("")
+    $(".xx").text("")
+    //var elem = dados_stat_manipulados[elemSelec()]
+    !elem() && (elem() = {});
+    
+    if (elem().distribuição == "log") {
+        $("#distLogNormal").prop("checked", true)
+    } else {
+        $("#distLogNormal").prop("checked", false)
+    }
+    
+    if (elem().usar_hist) {
+        $("#usar_hist").prop("checked", true)
+    } else {
+        $("#usar_hist").prop("checked", false)
+    }
+    
+    //Se não existe os dados já gravados, pega os dados com a distribuição original
+    !elem().dados && (elem().dados = estat.sort(estat.getColumn(elemSelec()).filter(Number),"desc"))
+    
+    if (populações[elemSelec()] == undefined) {
+            $("#n_subpop").val(2);       
+            populações[elemSelec()] = {n_pop: 0,
+                                       inflexões: {inf_1: 0
+                                                  }
+                                      }
+        } else {
+            $("#n_subpop").val(populações[elemSelec()].n_pop);   
+        }
+    $("#inflexões").children().remove();
+    $("#subpopulações tbody").empty();
+    gerarVagasSubpopulação(true);
+    elem().média = estat.mean(elem().dados);
+    elem().desviopadrão = estat.standardDeviation(elem().dados);
+    elem().probNormal = probNormal(elem().dados);
+    $("#hist_plot svg").remove()
+    plotarHistograma(dados_stat_manipulados[elemSelec()].histograma_classes || 0.25)
+    if (elem().usar_hist) {
+        pp_hist()
+ //       elem().dados_classes_hist ? elem().dados_classes_hist : pp_hist()
+        plotarGráfico(elem().probNormal_hist,elem().dados_classes_hist)
+    } else {
+        plotarGráfico(elem().probNormal,elem().dados)
+    }
+    $("#n").html(elem().n);
+    $("#média").html(precisão(transformação(elem().média,elemSelec())));
+    $("#dp").html(precisão(transformação(elem().desviopadrão,elemSelec(), "desvio padrão")));
+    elem()["max"] = estat.maximum(elem().dados);
+    elem()["min"] = estat.minimum(elem().dados);
+    elem()["CV"] = estat.coefficientOfVariation(elem().dados)*100;
+    elem()["q25"] = estat.quantile(elem().dados, 0.25);
+    elem()["q75"] = estat.quantile(elem().dados, 0.75);
+    elem()["mediana"] = estat.quantile(elem().dados, 0.5);
+    elem()["IQR"] = estat.interQuartileRange(elem().dados);
+    elem()["limiar_2ordem"] = elem().q75 + 1.5*elem().IQR;
+    elem()["limiar_1ordem"] = elem().q75 + 3*elem().IQR;
+    plotarBoxplot()
+}
+    
+
+    var w = 600;
+    var h = 600;
+    var y = [];
+    var x = []; 
+    var margins = {left: 50, right: 50, top: 20, bottom: 35}
+    var graf_config = {}
+
+//PLOTAR GRÁFICO
+function plotarGráfico(x_data,y_data) {
+    
+    $("#prob_plot svg").remove()
+    
+    y = y_data;
+    x = x_data;
+    var dataset = juntar_arrays(x,y);
+    console.log(dataset)
+
+    //Create SVG element
+    var svg = d3.select("#prob_plot")
+      .append("svg")
+      .attr("width", w)
+      .attr("height", h)
+      .attr("title","P-P_" + elemSelec());
+    
+    //Cria a área a ser clipada no gráfico para aparecer só os pontos dentro dos eixos
+    var clip = svg.append("svg:clipPath")
+        .attr("id", "clip")
+        .append("svg:rect")
+        .attr("x", "0")
+        .attr("y", "0")
+        .attr('width', w - margins.left - margins.right)
+        .attr('height', h - margins.top - margins.bottom);
+    
+    //Eixo X (percentis)
+    var xscale = d3.scaleLinear()
+    //             .domain([-2.325,2.325]) //Esses valores representam percentil 1 ao 99
+                   .domain(d3.extent(x))
+                   .range([0, w - margins.left - margins.right])
+                    
+    graf_config.xscale = xscale
+  
+    //Eixo Y (Valores do elemento)
+    var yscale = d3.scaleLinear()
+                   .domain(d3.extent(y))
+                   .range([h - margins.top - margins.bottom, 0])
+    graf_config.yscale = yscale
+    
+    svg.append("g")
+       .attr("transform", "translate(" + margins.left + "," + margins.top + ")")
+       .call(d3.axisLeft().scale(yscale));
+    
+    if ($("#distLogNormal").is(":checked")) {
+        var yscale_log = d3.scaleLog()
+                   .domain(d3.extent(y).map(x => Math.pow(10, x)))
+                   .range([h - margins.top - margins.bottom, 0])
+            svg.append("g")
+               .attr("transform", "translate(" + (w - margins.right) +  "," + margins.top + ")")
+               .call(d3.axisRight().scale(yscale_log).tickFormat(d3.format(".6")));
+    }
+
+    //Colocar o nome do eixo Y (elemento)
+    var labelAxisY = $("#distLogNormal").is(":checked") ? elemSelec() + " (log)" : elemSelec()
+    svg.append("text")
+       .attr("transform", "rotate(-90)")
+       .attr("y", 0)
+       .attr("x",0 - (h / 2))
+       .attr("dy", "1em")
+       .style("text-anchor", "middle")
+       .text(labelAxisY);
+    
+    //Valores de probabilidade e respectivos percentis
+    var ticksAxisX = [[-2.325,1],[-2.053,2],[-1.645,5],[-1.281,10],[-0.994,16],[-0.674,25],[-0.524,30],[-0.253,40],[0,50],[0.253,60],[0.524,70],[0.674,75],[0.994,86],[1.281,90],[1.645,95],[2.053,98],[2.325,99]]
+    ticksAxisX = ticksAxisX.filter(dado => dado[0] >= d3.min(x) && dado[0] <= d3.max(x))
+    
+    svg.append("g")
+       .attr("transform", "translate(" + margins.left + "," + (h - margins.bottom) + ")")    
+       .call(d3.axisBottom()
+               .scale(xscale)
+               .tickValues(ticksAxisX.map(function(x) {return x[0]}))
+               .tickFormat(function (d,i) {return ticksAxisX[i][1]})
+            )
+    
+    //Colocar o nome do eixo X (percentis)
+    svg.append("text")             
+       .attr("transform",
+             "translate(" + (w/2) + " ," + (h - 3) + ")")
+       .style("text-anchor", "middle")
+       .text("Quantile");
+    
+    svg.append("g")
+      .attr("clip-path","url(#clip)")
+      .attr("transform", "translate(" + margins.left + "," + margins.top + ")")
+      .selectAll("circle")
+      .data(dataset)
+      .enter()
+      .append("circle")
+      .attr("cx", function(d) {
+        return xscale(d[0]);
+      })
+      .attr("cy", function(d) {
+        return yscale(d[1]);
+      })
+      .attr("r", 3)
+      .attr("fill", "#00aa88");
+      
+    //Cria um grupo para receber os dados de subpopulação
+        d3.select("svg").append("g")
+                          .attr("clip-path","url(#clip)") //aplica máscara excluindo os valores que cairiam fora do gráfico
+                          .attr("transform", "translate(" + margins.left + "," + margins.top + ")")
+                          .attr("class", "subpop")
+    
+    //Evento para adicionar a linha de inflexão
+    d3.selectAll("#prob_plot svg").on("click", function(d,i) {
+        if (!definindo_inflexãos_automatica){
+        var coordx = d3.mouse(this)[0];
+        if (coordx > margins.left && coordx < w - margins.right) {
+        let n_inflexões = d3.select(this).selectAll(".inflexão").size()+1
+        if (n_inflexões < populações[elemSelec()].n_pop) {
+            if (coordx > (!d3.selectAll("line[n_inflexão='" + (n_inflexões - 1) + "']").empty() &&  d3.selectAll("line[n_inflexão='" + (n_inflexões - 1) + "']").attr("x1"))) {
+                    d3.select(this).append("line")
+                                   .attr("class", "inflexão")
+                                   .attr("n_inflexão", n_inflexões)
+                                   .attr("x1", coordx)
+                                   .attr("x2", coordx)
+                                   .attr("y1", margins.top)
+                                   .attr("y2", h - margins.bottom)
+                                   .call(drag);
+            var inflexão_valor = xscale.invert(coordx - margins.left);
+            $(".inflexão_valor[n_inflexão=" + n_inflexões + "]").val(stdNormal(inflexão_valor)*100);
+            populações[elemSelec()].inflexões["inf_" + n_inflexões] = inflexão_valor
+            calc_pop([[n_inflexões],[n_inflexões + 1]])   
+            } else {
+                    alert("Place inflections from left to right. You can change their position later by dragging them after they are placed.")
+                    //alert("Coloque as inflexões da esquerda para a direita. Você pode alterar a posição delas arrastando-as após serem inseridas.")
+                }
+        } else if (populações[elemSelec()].n_pop - 1 == 1) {
+                d3.select(this).select(".inflexão").transition()
+                           .attr("x1", coordx)
+                           .attr("x2", coordx)
+                var inflexão_valor = xscale.invert(coordx - margins.left);
+                $(".inflexão_valor[n_inflexão=" + (n_inflexões - 1) + "]").val(stdNormal(inflexão_valor)*100);
+                populações[elemSelec()].inflexões["inf_" + (n_inflexões - 1)] = inflexão_valor
+                calc_pop([[1],[2]])
+        }
+        }
+        }
+    });
+    
+   
+    
+    var subpopulações = []
+    for (i = 1; i <= populações[elemSelec()].n_pop; i++) {
+        var d = populações[elemSelec()].inflexões["inf_" + i]
+        if (d !== 0 && d !== undefined) {
+            $(".inflexão_valor[n_inflexão='" + i + "']").val(precisão(stdNormal(d)*100));
+            var coordx = graf_config.xscale(d) + margins.left;
+            d3.select("svg").append("line")
+                               .attr("class", "inflexão")
+                               .attr("n_inflexão", i)
+                               .attr("x1", coordx)
+                               .attr("x2", coordx)
+                               .attr("y1", margins.top)
+                               .attr("y2", h - margins.bottom)
+                               .call(drag);
+        }
+        var p = populações[elemSelec()]["pop_" + i]
+        if (p.dados !== undefined) {
+            subpopulações.push([i, p.média, p.desviopadrão])
+        }
+    }
+    if (subpopulações.length > 0) {calc_pop(subpopulações)}
+
+}
+
+//PLOTAR HISTOGRAMA
+//(informar número de classe ou fração de desvio-padrão, se deixar em branco usa a fórmula de Sturges
+function plotarHistograma(num_classes){
+    
+    var w_hist = w*0.6
+    var h_hist = h*0.6
+    
+    var y_hist = dados_stat_manipulados[elemSelec()].dados
+    
+    $(".grafico_hist").remove()
+    
+    //Create SVG element
+    if (d3.select("#hist_plot svg").empty()){
+        var svg_hist = d3.select("#hist_plot")
+          .append("svg")
+          .attr("width", w_hist)
+          .attr("height", h_hist)
+          .attr("title","Histograma_" + elemSelec());
+
+        var clip = svg_hist.append("svg:clipPath")
+            .attr("id", "clip_hist")
+            .append("svg:rect")
+            .attr("x", "0")
+            .attr("y", "0")
+            .attr('width', w_hist - margins.left - margins.right)
+            .attr('height', h_hist - margins.bottom);
+        
+        d3.select("#hist_plot svg").append("g")
+                               .attr("clip-path","url(#clip_hist)")
+                               .attr("transform", "translate(" + margins.left + "," + margins.top/2 + ")")
+                               .attr("class", "subpop_hist")
+    } else {
+        var svg_hist = d3.select("#hist_plot svg")
+    }
+    
+    var svg_grafico_hist = svg_hist.append("g")
+                    .attr("class", "grafico_hist")
+    
+    //Eixo X (dados)
+    var xscale_hist = d3.scaleLinear()
+                        .domain(d3.extent(y_hist))
+                        .range([0, w_hist - margins.left - margins.right])
+                    
+    graf_config.xscale_hist = xscale_hist
+    
+    if (num_classes >= 1) {
+        var bins = d3.histogram().thresholds(d3.range(d3.min(y_hist),d3.max(y_hist),(d3.max(y_hist) - d3.min(y_hist))/num_classes))(y_hist)
+        $("#slider").val(num_classes)
+    } else if (num_classes != null && num_classes < 1) {
+        var bins = d3.histogram().thresholds(d3.range(d3.min(y_hist),d3.max(y_hist),num_classes*elem().desviopadrão))(y_hist)
+        $("#num_slider").text(bins.length)
+        $("#slider").val(bins.length)
+    } else {
+        var bins = d3.histogram()(y_hist)
+        let num_classes = d3.histogram().thresholds()(y_hist) + 1
+        $("#num_slider").text(num_classes)
+        $("#slider").val(num_classes)
+    }
+    elem().histograma_classes = $("#slider").val()
+    elem().bins = bins
+    elem().bins.reverse()
+    
+    console.log(bins)
+    
+    var yscale_hist = d3.scaleLinear()
+                   .domain(d3.extent(bins, function(d) { return d.length; }))
+                   .range([h_hist - margins.top - margins.bottom, 0])
+    graf_config.yscale_hist = yscale_hist
+    var colorScale = d3.scaleLinear()
+                       .domain(d3.extent(bins, function(d) { return d.length; }))
+                       .range([d3.rgb("gray").brighter(), d3.rgb("gray").darker()]);
+    
+    var bar = svg_grafico_hist.append("g")
+                 .attr("transform", "translate(" + margins.left + "," + margins.top + ")")
+                 .selectAll(".bar")
+                 .data(bins)
+                 .enter().append("g")
+                 .attr("class", "bar")
+                 .attr("transform", function(d) { return "translate(" + xscale_hist(d.x0) + "," + yscale_hist(d.length) + ")"; });
+    
+    bar.append("rect")
+        .attr("x", 1)
+        .attr("width", xscale_hist(bins[1].x1) - xscale_hist(bins[1].x0))
+        .attr("height", function(d) { return h_hist - margins.top - margins.bottom - yscale_hist(d.length);})
+        .attr("fill", function(d) { return colorScale(d.length) })
+    
+    svg_grafico_hist.append("g")
+       .attr("transform", "translate(" + margins.left + "," + margins.top + ")")
+       .call(d3.axisLeft().scale(yscale_hist));
+
+    //Colocar o nome do eixo Y (elemento)
+    svg_grafico_hist.append("text")
+       .attr("transform", "rotate(-90)")
+       .attr("y", (margins.left / 8))
+       .attr("x",0 - (h_hist / 2))
+       .attr("dy", "1em")
+       .style("text-anchor", "middle")
+       .style("font-size", "small")
+       //.text("Frequência");
+       .text("Frequency");
+    
+    svg_grafico_hist.append("g")
+       .attr("transform", "translate(" + margins.left + "," + (h_hist - margins.bottom) + ")")    
+       .call(d3.axisBottom(xscale_hist))
+    
+    //Colocar o nome do eixo X (dados)
+    var labelAxisX = $("#distLogNormal").is(":checked") ? elemSelec() + " (log)" : elemSelec()
+    svg_grafico_hist.append("text")             
+       .attr("transform",
+             "translate(" + (w_hist/2) + " ," + (h_hist - 5) + ")")
+       .style("text-anchor", "middle")
+       .style("font-size", "small")
+       .text(labelAxisX);
+    
+    d3.select(".subpop_hist").raise()
+
+}
+  
+var slider = document.getElementById("slider");
+var output = document.getElementById("num_slider");
+output.innerHTML = slider.value;
+
+slider.oninput = function() {
+  output.innerHTML = this.value;
+    plotarHistograma(this.value)
+    if (elem().usar_hist){
+            pp_hist();
+            plotarGráfico(elem().probNormal_hist,elem().dados_classes_hist)
+    }
+    
+}
+   
+$("#frações_dp").change(function() {
+    plotarHistograma(+$(this).children(":selected")[0].value)
+    if (elem().usar_hist){
+            pp_hist();
+            plotarGráfico(elem().probNormal_hist,elem().dados_classes_hist)
+    }
+});
+ 
+//PLOTAR BOXPLOT
+function plotarBoxplot() {
+    
+    $("#box_plot svg").remove()
+    
+    
+    var proporção = populações[elemSelec()].n_pop <= 2 ? 0.4 : (populações[elemSelec()].n_pop <= 4 ? 0.6 : (populações[elemSelec()].n_pop <= 6 ? 0.8 : 1))
+    
+    
+    var w_box = w*proporção
+    var h_box = h*0.4
+    
+    var svg = d3.select("#box_plot")
+                .append("svg")
+                  .attr("width", w_box + margins.left + margins.right)
+                  .attr("height", h_box + margins.top + margins.bottom)
+                  .attr("title","Box-plot_" + elemSelec())
+                .append("g")
+                  .attr("transform",
+                        "translate(" + margins.left + "," + margins.top + ")");
+    
+//Cria a área a ser clipada no gráfico para aparecer só os boxplot dentro dos eixos
+    var clip = svg.append("svg:clipPath")
+        .attr("id", "clip_boxplot")
+        .append("svg:rect")
+        .attr("x", "0")
+        .attr("y", "0")
+        .attr('width', w_box)
+        .attr('height', h_box);
+    
+    
+    
+    //dados do boxplot
+    //primeiro o boxplot dos dados originais
+    var sumstat = [{
+                    key: "Dataset",
+                    value: {
+                        q1: elem().q25,
+                        median: elem().mediana,
+                        q3: elem().q75,
+                    }
+                   }]
+    var domain = ["Dataset"]
+    sumstat[0].value.interQuantileRange = sumstat[0].value.q3 - sumstat[0].value.q1
+    sumstat[0].value.min = estat.maximum([sumstat[0].value.q1 - 1.5 * sumstat[0].value.interQuantileRange,elem().min])
+    sumstat[0].value.max = estat.minimum([sumstat[0].value.q3 + 1.5 * sumstat[0].value.interQuantileRange,elem().max])
+    var outliers = []
+    if (elem().max > sumstat[0].value.max) {
+        outliers = elem().dados.filter(dado => dado > sumstat[0].value.max)
+    }
+    
+    //em seguida os dados das subpopulações
+    for (i = 1; i <= populações[elemSelec()].n_pop; i++) {
+        let nome_pop = "pop_" + i;
+        let pop = populações[elemSelec()][nome_pop];
+        sumstat.push({
+                    key: "sub" + nome_pop,
+                    value: {
+                        q1: pop.q25,
+                        median: pop.mediana,
+                        q3: pop.q75,
+                        min: pop.min,
+                        max: pop.max,
+                    }
+                   })
+        domain.push("sub" + nome_pop)
+    }
+
+// Show the X scale
+var x = d3.scaleBand()
+          .range([ 0, w_box ])
+          .domain(domain)
+          .paddingInner(1)
+          .paddingOuter(.5)
+        svg.append("g")
+           .attr("transform", "translate(0," + h_box + ")")
+           .call(d3.axisBottom(x))
+    
+// Show the Y scale
+var y = d3.scaleLinear()
+          .domain([d3.min(elem().dados) - Math.abs(d3.min(elem().dados)*0.1),d3.max(elem().dados) + Math.abs(d3.max(elem().dados)*0.1)])
+          .range([h_box, 0]);
+svg.append("g").call(d3.axisLeft(y))
+    
+if ($("#distLogNormal").is(":checked")) {
+        var yscale_log = d3.scaleLog()
+                   .domain([d3.min(elem().dados) - Math.abs(d3.min(elem().dados)*0.1),d3.max(elem().dados) + Math.abs(d3.max(elem().dados)*0.1)].map(x => Math.pow(10, x)))
+                   .range([h_box, 0])
+            svg.append("g")
+               .attr("transform", "translate(" + w_box +  ",0)")
+               .call(d3.axisRight().scale(yscale_log).ticks(3, d3.format(".6")));
+    }
+
+var boxWidth = w_box/(1 + populações[elemSelec()].n_pop)*0.6
+
+// Show the main vertical line
+svg//.select("#area_grafico")
+    .selectAll("vertLines")
+    .data(sumstat)
+    .enter()
+    .append("line")
+      .attr("clip-path","url(#clip_boxplot)")
+      .attr("x1", function(d){return(x(d.key))})
+      .attr("x2", function(d){return(x(d.key))})
+      .attr("y1", function(d){return(y(d.value.min))})
+      .attr("y2", function(d){return(y(d.value.max))})
+      .style("width", boxWidth)
+      .attr("class", function(d){return(d.key.split("sub")[1] + " boxplot")})
+
+//Rectangle for the main boxes
+  svg
+    .selectAll("boxes_white")
+    .data(sumstat)
+    .enter()
+    .append("rect")
+        .attr("clip-path","url(#clip_boxplot)")
+        .attr("x", function(d){return(x(d.key)-boxWidth/2)})
+        .attr("y", function(d){return(y(d.value.q3))})
+        .attr("height", function(d){return(y(d.value.q1)-y(d.value.q3))})
+        .attr("width", boxWidth)
+        .attr("fill", "#ffffff")
+    
+ svg
+    .selectAll("boxes_colored")
+    .data(sumstat)
+    .enter()
+    .append("rect")
+        .attr("clip-path","url(#clip_boxplot)")
+        .attr("x", function(d){return(x(d.key)-boxWidth/2)})
+        .attr("y", function(d){return(y(d.value.q3))})
+        .attr("height", function(d){return(y(d.value.q1)-y(d.value.q3))})
+        .attr("stroke", "black")
+        .attr("width", boxWidth)
+        .attr("class", function(d){return(d.key.split("sub")[1] + " boxplot")})
+        .attr("fill-opacity", "0.3")
+
+
+
+
+// Show the median, min and max
+let hlines = ["min","max","median"]
+hlines.forEach(function (line) {
+    svg
+    .selectAll(line + "Lines")
+    .data(sumstat)
+    .enter()
+    .append("line")
+      .attr("clip-path","url(#clip_boxplot)")
+      .attr("x1", function(d){return(x(d.key)-boxWidth/2) })
+      .attr("x2", function(d){return(x(d.key)+boxWidth/2) })
+      .attr("y1", function(d){return(y(d.value[line]))})
+      .attr("y2", function(d){return(y(d.value[line]))})
+      .style("width", 80)
+      .attr("class", function(d){return(d.key.split("sub")[1] + " boxplot")})
+      
+  })
+   
+    
+//Plotar os outliers
+if (outliers.length > 0) {
+    svg
+       .selectAll("outliers")
+       .data(outliers)
+       .enter()
+       .append('circle')
+           .attr("clip-path","url(#clip_boxplot)")
+           .attr('class','outliers')
+           .attr('cx', x(domain[0]))
+           .attr('cy', function(d){return(y(d))})
+           .attr('r', 3)
+           .attr('opacity', '0.3')
+           .attr('fill', 'black')
+    } 
+    
+    
+    
+    
+/*if (outliers.length > 0) {
+    svg
+       .selectAll("outliers")
+       .data(outliers)
+       .enter()
+       .append('path')
+       .attr('class','outliers')
+	   .attr('transform', function(d) {
+		    return 'translate(' + x(domain[0]) + ',' + y(d) + ')scale(0.75)';
+	   })
+	   .attr('d', d3.symbol().type(d3.symbolWye))
+    } */       
+}
+    
+    
+    
+    
+//ARRASTAR INFLEXÃO PARA ACERTAR SUA POSIÇÃO    
+var drag = d3.drag()
+  .on('start', dragstarted)
+  .on('drag', dragged)
+  .on('end', dragended);
+
+function dragstarted() {
+    d3.select(this).classed("selecionado", true);
+}
+
+function dragged() {
+    var x = d3.event.x;
+    var inf_selec = $(this).attr("n_inflexão")
+    var inf_anterior = !d3.selectAll("line[n_inflexão='" + (inf_selec - 1) + "']").empty() &&  d3.selectAll("line[n_inflexão='" + (inf_selec - 1) + "']").attr("x1")
+    var inf_seguinte = !d3.selectAll("line[n_inflexão='" + (+inf_selec + 1) + "']").empty() &&  d3.selectAll("line[n_inflexão='" + (+inf_selec + 1) + "']").attr("x1")
+
+    
+    console.log("|"+ inf_selec + "| " + inf_anterior + " .: " + x + " :. " + inf_seguinte)
+    !inf_anterior ? inf_anterior=margins.left : inf_anterior
+    !inf_seguinte ? inf_seguinte=w-margins.right : inf_seguinte
+    console.log("|"+ inf_selec + "| " + inf_anterior + " .: " + x + " :. " + inf_seguinte)
+    if (x > inf_anterior && x < inf_seguinte) {
+        d3.select(this)
+            .attr("x1", x)
+            .attr("x2", x);
+            var inflexão_valor = graf_config.xscale.invert(x - margins.left);
+            $(".inflexão_valor[n_inflexão=" + inf_selec + "]").val(stdNormal(inflexão_valor)*100)
+            populações[elemSelec()].inflexões["inf_" + inf_selec] = inflexão_valor
+            calc_pop([[inf_selec],[+inf_selec + 1]])
+        }
+}
+
+function dragended() {
+    d3.select(this).classed("selecionado", false);
+}   
+    
+    
+//Evento para verificar mudanças das médias e desvios padrão via caixa de texto
+$(".col_esq").on('change', '.xx', function() {
+    if ($(this).attr("id") == "inflexão_valor") {
+        var inf_selec = $(this).attr("n_inflexão")
+        var inflexão_valor = estat.probit($(this).val()/100)
+        var coordx = graf_config.xscale(inflexão_valor) + margins.left;
+        if (d3.selectAll("line[n_inflexão='" + inf_selec + "']").empty()) {
+            d3.select("svg").append("line")
+                               .attr("class", "inflexão")
+                               .attr("n_inflexão", inf_selec)
+                               .attr("x1", coordx)
+                               .attr("x2", coordx)
+                               .attr("y1", margins.top)
+                               .attr("y2", h - margins.bottom)
+                               .call(drag);
+        } else {
+            d3.selectAll("line[n_inflexão='" + inf_selec + "']").transition()
+                           .attr("x1", coordx)
+                           .attr("x2", coordx)
+        }
+        populações[elemSelec()].inflexões["inf_" + inf_selec] = inflexão_valor
+        calc_pop([[inf_selec],[+inf_selec + 1]])
+    } else {
+        var n_pop = $(this).attr("n_pop")
+        populações[elemSelec()]["pop_" + n_pop].média = (elem().distribuição == "log") ? Math.log10($("#média_pop_" + n_pop).val()) : $("#média_pop_" + n_pop).val()
+        populações[elemSelec()]["pop_" + n_pop].desviopadrão = (elem().distribuição == "log") ? (Math.log10($("#dp_pop_" + n_pop).val()*1 + Math.pow(10,populações[elemSelec()]["pop_" + n_pop].média)) - populações[elemSelec()]["pop_" + n_pop].média) : $("#dp_pop_" + n_pop).val()
+        calc_pop([[n_pop,populações[elemSelec()]["pop_" + n_pop].média,populações[elemSelec()]["pop_" + n_pop].desviopadrão]])
+    }
+    console.log("mudou " + $(this).attr("id"))
+})
+    
+var inflexões_calculadas
+var inflexão_atual
+var valor_ultima_inflexão
+var definindo_inflexãos_automatica = false
+//Função para identificar automaticamente as inflexões
+function inflexoes_automaticas(suavização) {
+    //var elem = dados_stat_manipulados[elemSelec()];
+    definindo_inflexãos_automatica = true
+    if (populações[elemSelec()].inflexões_automaticas == undefined) {
+    var x,y,i;
+    if (!elem().usar_hist){
+        x = elem().probNormal; y = elem().dados
+    } else {x = elem().probNormal_hist; y = elem().dados_classes_hist}
+    var data = []
+    for (i = 0; i < x.length; i++) {data.push({x: x[i], y: y[i]})}
+        
+    var lambda = suavização || 0.01
+    var basis = smoothingSplines(data, data);
+    var output = RidgeRegression(basis, lambda),
+        params = output[0];
+
+    // Generate smooth line
+    var spline = {x:[],y:[]},
+        i = 0,
+        j = 0;
+    var p = {
+            min: Math.floor(Math.min(...x)*100),
+            max: Math.ceil(Math.max(...x)*100),
+            }
+    p.intervalo = (p.max - p.min)/300
+    console.log(p)
+    for (i = p.min; i < p.max; i = i + p.intervalo){
+        var val = smoothingSplines([{'x': i/100, 'y':0}], data);
+
+        var yhat = 0.0;
+        for (j = 0; j < params.length; j++){
+            yhat += params[j][0] * val.x[0][j];
+        }
+        spline.x.push(i/100);
+        spline.y.push(yhat);
+    }
+    
+/*var spline_line = d3.select("svg").append("g")
+      .attr("clip-path","url(#clip)")
+      .attr("transform", "translate(" + margins.left + "," + margins.top + ")")
+      .selectAll("#spline")
+
+
+var line = d3.line()
+	.x(function(d) { return graf_config.xscale(d.x); })
+	.y(function(d) { return graf_config.yscale(d.y); });
+      
+spline_line.datum(spline);
+      .append("path")
+      .attr("id", "spline")
+      .attr("d", line)
+      .attr("stroke", "#ff0033")*/
+    
+    
+    var primeira_derivada = derivada_numerica(spline.x,spline.y)
+    var segunda_derivada = derivada_numerica(primeira_derivada.x,primeira_derivada.y)
+    console.log(segunda_derivada)
+    let d = segunda_derivada.y
+    inflexões_calculadas = []
+    for (i = 0; i < d.length - 1; i++) {
+        if (d[i]*d[i + 1] < 0) { //teste se um valor é positivo e o outro negativo
+            let a = Math.abs(d[i + 1] - d[i])
+            if (a != Infinity){
+            inflexões_calculadas.push({indice: i,
+                                       delta: a
+                                      })
+            }
+        }
+    }
+    inflexões_calculadas.sort(function(a, b){return b.delta - a.delta});
+    console.log(inflexões_calculadas)
+
+    
+    
+    
+/*    for (var inf in inflexões_calculadas){
+        $(".inflexão_valor[n_inflexão=" + (+inf + 1) + "]").val(stdNormal(inflexões_calculadas[inf])*100)
+        populações[elemSelec()].inflexões["inf_" + (+inf + 1)] = inflexões_calculadas[inf]
+        var coordx = graf_config.xscale(inflexões_calculadas[inf]) + margins.left;
+        if (d3.selectAll("line[n_inflexão='" + (+inf + 1) + "']").empty()) {
+            d3.select("svg").append("line")
+                               .attr("class", "inflexão")
+                               .attr("n_inflexão", (+inf + 1))
+                               .attr("x1", coordx)
+                               .attr("x2", coordx)
+                               .attr("y1", margins.top)
+                               .attr("y2", h - margins.bottom)
+                               .call(drag);
+        } else {
+            d3.selectAll("line[n_inflexão='" + (+inf + 1) + "']").transition()
+                           .attr("x1", coordx)
+                           .attr("x2", coordx)
+        }
+    }*/
+    
+    var inflexões_reais = []
+    var delta = []
+ //   for (i = 0; i < populações[elemSelec()].n_pop - 1; i++) {
+    for (i = 0; i < inflexões_calculadas.length; i++) {
+        let indice = inflexões_calculadas[i].indice
+        let valor_x = segunda_derivada.x[indice] + (Math.abs(segunda_derivada.x[indice + 1] - segunda_derivada.x[indice]) * Math.abs(segunda_derivada.y[indice]) / Math.abs(segunda_derivada.y[indice + 1] - segunda_derivada.y[indice]))
+        let valor_y = spline.y[indice] + (Math.abs(spline.y[indice + 1] - spline.y[indice]))/2
+        inflexões_reais.push({x: valor_x, y: valor_y, delta: inflexões_calculadas[i].delta})
+        delta.push(inflexões_calculadas[i].delta)
+    }
+    //inflexões_reais.sort(function(a, b){return a - b})
+    console.log(inflexões_reais)
+    populações[elemSelec()].inflexões_automaticas = {
+        inflexões_reais: inflexões_reais,
+        delta: delta
+    }
+    
+} else {
+    var inflexões_reais = populações[elemSelec()].inflexões_automaticas.inflexões_reais
+    var delta = populações[elemSelec()].inflexões_automaticas.delta   
+}
+      
+    var rscale = d3.scaleLinear()
+                   .domain(d3.extent(delta))
+                   .range([5, 10])
+    
+    
+   var probableinflections = d3.select("svg").append("g")
+      .attr("clip-path","url(#clip)")
+      .attr("transform", "translate(" + margins.left + "," + margins.top + ")")
+      .selectAll(".probableinflections")
+      .data(inflexões_reais);
+    
+   var color = function() {return "hsl(" + Math.random() * 360 + ",100%,50%)";}  
+   
+probableinflections.enter()
+      .append("circle")
+      .attr("class", "probableinflections")
+      .attr("cx", function(d) {
+        return graf_config.xscale(d.x);
+      })
+      .attr("cy", function(d) {
+        return graf_config.yscale(d.y);
+      })
+      .attr("r", function(d) {
+        return rscale(d.delta);
+      })
+      .attr("fill", "crimson")
+      .attr("opacity", "0.6")
+      .attr("valor", function(d) {
+        return d.x;
+      });
+    
+inflexão_atual = 1
+valor_ultima_inflexão = -1000
+    
+$(".probableinflections").on("click", function() {
+    event.stopPropagation()
+    let valor_inflexão = $(this).attr("valor")
+    console.log(stdNormal(+valor_inflexão)*100) 
+    console.log("teste: " + valor_inflexão + " > " + valor_ultima_inflexão + "? -> " + (+valor_inflexão > +valor_ultima_inflexão))
+    if (+valor_inflexão > +valor_ultima_inflexão) {
+        $(".inflexão_valor[n_inflexão=" + inflexão_atual + "]").val(stdNormal(+valor_inflexão)*100);
+        $(".inflexão_valor[n_inflexão=" + inflexão_atual + "]").trigger("change")
+        if (inflexão_atual < populações[elemSelec()].n_pop-1) {
+            valor_ultima_inflexão = valor_inflexão
+            inflexão_atual++
+        } else {
+            d3.selectAll(".probableinflections").remove()
+            definindo_inflexãos_automatica = false
+        }
+    } else {
+        alert("Selecione as inflexões em ordem crescente (da esquerda para direita). Se deseja recomeçar, clique em Inflexões Automáticas novamente.")
+    }
+})
+    
+    
+/*    for (var inf in inflexões_reais){
+        $(".inflexão_valor[n_inflexão=" + (+inf + 1) + "]").val(stdNormal(inflexões_reais[inf])*100)
+        populações[elemSelec()].inflexões["inf_" + (+inf + 1)] = inflexões_reais[inf]
+        var coordx = graf_config.xscale(inflexões_reais[inf]) + margins.left;
+        if (d3.selectAll("line[n_inflexão='" + (+inf + 1) + "']").empty()) {
+            d3.select("svg").append("line")
+                               .attr("class", "inflexão")
+                               .attr("n_inflexão", (+inf + 1))
+                               .attr("x1", coordx)
+                               .attr("x2", coordx)
+                               .attr("y1", margins.top)
+                               .attr("y2", h - margins.bottom)
+                               .call(drag);
+        } else {
+            d3.selectAll("line[n_inflexão='" + (+inf + 1) + "']").transition()
+                           .attr("x1", coordx)
+                           .attr("x2", coordx)
+        }
+    }
+       for (var inf in inflexões_reais){
+           calc_pop([[+inf + 1],[+inf + 2]])
+       }*/
+}
+
+function otimizar() {
+    i = 0;
+    for (i; i < populações[elemSelec()].n_pop - 1; i++) {
+        otimizar_inflexões(i+1,populações[elemSelec()].pop_mix.erro,1)
+        otimizar_inflexões(i+1,populações[elemSelec()].pop_mix.erro,-1)
+    } 
+}
+    
+    
+//Calcula a derivada numérica a partir de dois array [x] e [y]
+function derivada_numerica (x,y) {
+    let derivada = {}
+    derivada.x = [];
+    derivada.y = [];
+    let i = 0
+    for (i; i < x.length - 1; i++) {
+        derivada.x.push((x[i + 1] + x[i])/2)
+        derivada.y.push((y[i + 1] - y[i])/(x[i + 1] - x[i]))
+    }
+    return derivada
+}
+
+    
+function step(valor) {
+    var int = (Math.round(valor)+"").length
+    switch (int){
+        case 0:
+            window.alert("Save file");
+            break;
+        case 1:
+            return 0.01
+            break;
+        default:
+            return 1
+    }
+}
+    
+
+//Função que permite o usuário escolher o número de subpopulações, criando as caixas de inflexões e subpopulações correspondentes
+function gerarVagasSubpopulação(abrir_elemento) {
+    let n_subpop = $("#n_subpop").val()
+    if (n_subpop > 1) {
+    if (abrir_elemento) {populações[elemSelec()].n_pop = 0}
+    let n_subpop_gravadas = populações[elemSelec()].n_pop
+    
+    if (n_subpop > n_subpop_gravadas) { //adicionar novas subpopulações
+        let i
+        for (i = n_subpop_gravadas + 1; i <= n_subpop ; i++) {
+            let nome = "pop_" + i
+            if (populações[elemSelec()][nome] == undefined) {
+                populações[elemSelec()][nome] = {}
+                populações[elemSelec()].inflexões["inf_" + (i - 1)] = 0
+            }
+            populações[elemSelec()].n_pop++
+            $("#inflexões").append('<div class="caixa_inflexão" n_inflexão="' + (i - 1) + '">Inflection ' + (i - 1) + ': <input class="xx inflexão_valor" id="inflexão_valor" n_inflexão="' + (i - 1) + '"type="number" min="0" max="100"><br></div>')
+            
+            $("#subpopulações tbody").append(
+                '<tr dominio="' + i + '" id="caixa_subpop_' + i + '">' +
+                '<td style="text-align: left"><b>Subpopulation ' + i + '<span class="pop_' + i + '"> ●</span></b></td>' +
+                '<td class="de">-</td>' +
+                '<td class="até">-</td>' +
+                '<td><span class="xx" id="n_pop_' + i + '"></span></td>' +
+                '<td><input class="xx" id="média_pop_' + i + '" n_pop="' + i + '" type="number" step="0.01"></td>' +
+                '<td><input class="xx" id="dp_pop_' + i + '" n_pop="' + i + '" type="number"></td>' +
+                '</tr>'
+            )
+
+            console.log("Adicionada subpop " + i)
+        }
+        
+        for (i = 1; i <= n_subpop; i++) {
+            if ($('tr[dominio="' + i + '+' + (i + 1) + '"]').length == 0) {
+                $('tr[dominio="' + i + '"]').after(                    
+                    '<tr dominio="' + i + '+' + (i + 1) + '">' +
+                    '<td style="text-align: left"><b>Mixture ' + i + '+' + (i + 1) + '<b></td>' +
+                    '<td class="de">-</td>' +
+                    '<td class="até">-</td>' +
+                    '<td></td>' +
+                    '<td></td>' +
+                    '<td></td>' +
+                    '</tr>'
+                )
+            }
+        }        
+        
+        delete populações[elemSelec()].inflexões.inf_0
+        $(".caixa_inflexão[n_inflexão='0']").remove()
+        $("tr[dominio='" + n_subpop + "+" + (n_subpop*1 + 1) + "']").remove()
+    } else {
+        let i
+        for (i = +n_subpop + 1; i <= n_subpop_gravadas ; i++) {
+            let nome = "pop_" + i
+            populações[elemSelec()].n_pop--
+            delete populações[elemSelec()][nome]
+            d3.selectAll("." + nome).remove()
+            $("#caixa_subpop_" + i).remove()
+            console.log("Removida subpop " + i)
+            $(".caixa_inflexão[n_inflexão='" + (i - 1) + "']").remove()
+            d3.selectAll("line[n_inflexão='" + (i - 1) + "']").remove()
+            delete populações[elemSelec()].inflexões["inf_" + (i - 1)]
+            $('tr[dominio="' + i + '"]').remove()
+            $('tr[dominio="' + (i - 1) + '+' + i + '"]').remove()
+        }
+    }
+        } else {
+           // window.alert("Número mínimo de subpopulações = 2")
+            window.alert("Minimum number of subpopulations = 2")
+            $("#n_subpop").val(populações[elemSelec()].n_pop)
+        }
+}
+ 
+var contador = 0
+//Tenta diminuir o erro alterando as inflexões em intervalos de 1%
+function otimizar_inflexões(n_inf, erro_inicial, sinal) {
+    contador++
+    let inflexão_ant = populações[elemSelec()].inflexões["inf_" + n_inf]
+    let incremento = Math.abs(inflexão_ant/100)
+    console.log("Incremento: " + incremento)
+    //teste pra direita (+)
+    let erro_novo
+    let nova_inflexão = inflexão_ant + incremento*sinal
+    console.log("Nova inflexão: " + nova_inflexão)
+    $(".inflexão_valor[n_inflexão=" + n_inf + "]").val(stdNormal(nova_inflexão)*100)
+    populações[elemSelec()].inflexões["inf_" + n_inf] = nova_inflexão
+    var coordx = graf_config.xscale(nova_inflexão) + margins.left;
+        d3.selectAll("line[n_inflexão='" + n_inf + "']").transition()
+                       .attr("x1", coordx)
+                       .attr("x2", coordx)
+    calc_pop([[+n_inf],[+n_inf + 1]])
+    erro_novo = populações[elemSelec()].pop_mix.erro
+   // console.log(erro_novo)
+   if (erro_novo <= erro_inicial && contador < 20) {
+       console.log("Novo erro: " + erro_novo)
+       otimizar_inflexões(n_inf, erro_novo, sinal)
+   } else {
+       $(".inflexão_valor[n_inflexão=" + n_inf + "]").val(stdNormal(inflexão_ant)*100)
+       populações[elemSelec()].inflexões["inf_" + n_inf] = inflexão_ant
+       var coordx = graf_config.xscale(inflexão_ant) + margins.left;
+       d3.selectAll("line[n_inflexão='" + n_inf + "']").transition()
+                       .attr("x1", coordx)
+                       .attr("x2", coordx)
+       calc_pop([[+n_inf],[+n_inf + 1]])
+       contador = 0
+       console.log("Otimizado")
+   }
+}
+
+                                   
+var somar = (a,v) => {return a + v}
+
+/*Calcular as médias e desvios-padrão de duas populações.
+Subpopulações é um array fomatado da seguinte maneira
+                     [[número da subpopulação, média (opcional), desvio_padrão(opcional)]]
+                  Ex.:[
+                         [1, 50, 5],
+                         [2]
+                      ]
+Inflexões é um objeto formato da seguinte maneira
+                      {inf_i: inf,}
+                  Ex.:{inf_1: -0.66,
+                       inf_2: 0.3}
+                      */                      
+function calc_pop(subpopulações, hist, inflexões, background) {
+    //console.log("Calc_pop:")
+    //console.log([subpopulações,inflexões])
+    if (inflexões) {
+        for (i = 0; i < Object.keys(inflexões).length; i++) {
+            populações[elemSelec()].inflexões["inf_" + (1 + i)] = inflexões["inf_" + (1 + i)]
+            //$(".inflexão_valor[n_inflexão=" + (+i + 1) + "]").val(stdNormal(inflexões["inf_" + (1 + i)])*100);
+            if (!background) {mover_inflexão(+i + 1)}
+        }
+    }
+    //achar y correspondente à inflexão
+    //console.log(inflexão)
+    //console.log(subpopulações)
+    for (var linha in subpopulações) {
+        var subpop = subpopulações[linha]
+        var nome_pop = "pop_" + subpop[0]
+        var pop = populações[elemSelec()][nome_pop]
+        //console.log(pop)
+        //achar y correspondente à inflexão inferior e superior
+        var limiar_esq = stdNormal(populações[elemSelec()].inflexões["inf_" + (subpop[0] - 1)]) && y[x.filter(dado => dado < populações[elemSelec()].inflexões["inf_" + (subpop[0] - 1)]).length];
+        var limiar_dir = stdNormal(populações[elemSelec()].inflexões["inf_" + subpop[0]]) && y[x.filter(dado => dado < populações[elemSelec()].inflexões["inf_" + subpop[0]]).length];
+        
+        //console.log(nome_pop + " - " + limiar_esq + " :: " + limiar_dir)
+        //console.log(pop.dados)
+        if (limiar_esq) {
+            pop.dados = y.filter(dado => dado <= limiar_esq); //separa só os dados da direita da inflexão
+        }
+        
+        if (limiar_esq && limiar_dir) {
+            pop.dados = pop.dados.filter(dado => dado > limiar_dir)
+        } else if (limiar_dir) {
+           pop.dados = y.filter(dado => dado > limiar_dir); 
+        }
+        
+        if (pop.dados.length === 0) {
+            pop.dados.push(y[y.indexOf(limiar_dir) - 1] || limiar_dir) 
+            pop.dados.push(limiar_dir)
+            //console.log(pop.dados)
+        }
+        
+        if (elem().usar_hist) {
+            let qtd = elem().dados_classes_hist.indexOf(pop.dados[0])
+            var dados_hist_n = elem().dados_classes_hist_n.slice(qtd,qtd + pop.dados.length)
+            var n_hist = dados_hist_n.reduce(somar)
+            }
+//        console.log("v DADOS de N v")
+//        console.log(dados_hist_n)
+//        console.log(n_hist)
+        
+        pop.média = +subpop[1] || (!elem().usar_hist ? estat.mean(pop.dados) : (pop.dados.map(function(x,i) {return x * dados_hist_n[i]}).reduce(somar) / n_hist)); //calcula a média só com esses dados
+        pop.desviopadrão = +subpop[2] || (!elem().usar_hist ? estat.standardDeviation(pop.dados) : Math.sqrt(pop.dados.map(function(x,i) {return Math.pow(x - pop.média,2) * dados_hist_n[i]}).reduce(somar) / n_hist)) || 1E-6; //calcula o desvio padrão só com esses dados (completo ou classes do histograma)
+       // pop.n_proporcional = (elem().usar_hist ? n_hist : pop.dados.length) / dados_stat_manipulados[elemSelec()].n; 
+        pop.n_proporcional = ((stdNormal(populações[elemSelec()].inflexões["inf_" + subpop[0]]) || 1) - (stdNormal(populações[elemSelec()].inflexões["inf_" + (+subpop[0] - 1)]) || 0)) //calcula a proporção da população
+        $("#média_" + nome_pop).val(precisão(transformação(pop.média,elemSelec()))); // preenche as caixas de texto com os valores calculados
+        $("#média_" + nome_pop).attr("step", step(pop.média))
+        $("#dp_" + nome_pop).val(precisão(transformação(pop.desviopadrão,elemSelec(), "desvio padrão", nome_pop)));
+        $("#n_" + nome_pop).text(precisão(pop.n_proporcional*100));
+        
+        //Dados para boxplot das subpopulações (os quartis estão invertidos pois o P-P é plotado em ordem decrescentes)
+        pop.mediana = pop.média
+        pop.q25 = pop.média - estat.probit(0.75)*pop.desviopadrão
+        pop.q75 = pop.média - estat.probit(0.25)*pop.desviopadrão
+        pop.max = pop.média + 2.6979591353921726*pop.desviopadrão // = (Q75 - Q25)*1,5 + Q75 = Q99,651
+        pop.min = pop.média - 2.6979591353921726*pop.desviopadrão // = (Q75 - Q25)*1,5 - Q25 = Q00,349
+        
+        var população = d3.select(".subpop")
+                          
+                           
+        var coordenadas = {
+            x1: graf_config.xscale.range()[0],
+            x2: graf_config.xscale.range()[1]
+        }
+        
+        coordenadas.y1 = graf_config.yscale(-graf_config.xscale.invert(coordenadas.x1)*pop.desviopadrão+pop.média)
+        coordenadas.y2 = graf_config.yscale(-graf_config.xscale.invert(coordenadas.x2)*pop.desviopadrão+pop.média)
+        //console.log(coordenadas)
+        if (população.select("." + nome_pop).empty()) {
+            população.append("line")
+                           .attr("class", nome_pop + " pop")                        
+                           .attr("n_pop", subpop[0])
+                           .attr("x1", coordenadas.x1)
+                           .attr("x2", coordenadas.x2)
+                           .attr("y1", coordenadas.y1)
+                           .attr("y2", coordenadas.y2)
+                           .call(drag_pop);
+        } else {
+            população.select("." + nome_pop)
+                           .attr("x1", coordenadas.x1)
+                           .attr("x2", coordenadas.x2)
+                           .attr("y1", coordenadas.y1)
+                           .attr("y2", coordenadas.y2);
+        }
+        
+        
+        //Desenhar subpopulações no histograma
+        var n_dp = 2
+        var população_hist = d3.select(".subpop_hist")
+        pop.limite_inf = pop.média - n_dp * pop.desviopadrão
+        pop.limite_sup = pop.média + n_dp * pop.desviopadrão
+        var posição = graf_config.xscale_hist(pop.limite_inf)
+        var comprimento = graf_config.xscale_hist(pop.limite_sup) - posição
+        if (população_hist.select("." + nome_pop).empty()) {
+            população_hist.append("rect")
+                           .attr("class", nome_pop)                        
+                           .attr("n_pop", subpop[0])
+                           .attr("tipo", "baixo")
+                           .attr("x", posição)
+                           .attr("width", comprimento)
+                           .attr("height", margins.top/2 + graf_config.yscale_hist.range()[0] )
+                           .attr('opacity', 0.3)
+            população_hist.append("rect")
+                           .attr("class", nome_pop)                        
+                           .attr("n_pop", subpop[0])
+                           .attr("tipo", "topo")
+                           .attr("x", posição)
+                           .attr("width", comprimento)
+                           .attr("height", 2.5)
+        } else {
+            população_hist.selectAll("." + nome_pop)
+                           .attr("x", posição)
+                           .attr("width", comprimento)
+        }
+        var dist_normal_pop = []
+        for (let i = -4; i >= 4; i++) {
+            dist_normal_pop.push()
+        }
+        plotarBoxplot()
+}
+  
+//Preencher os domínios
+for (i = 1; i <= populações[elemSelec()].n_pop; i++) {
+        $('tr[dominio="' + i + '"]').children('.de').text(precisão(transformação(populações[elemSelec()]["pop_" + i].limite_inf, elemSelec())))
+        $('tr[dominio="' + i + '"]').children('.até').text(precisão(transformação(populações[elemSelec()]["pop_" + i].limite_sup, elemSelec())))
+}
+    
+for (i = 1; i <= populações[elemSelec()].n_pop; i++) {
+    var primeiro = $('tr[dominio="' + i + '"]').children('.de').text()*1
+    var segundo = $('tr[dominio="' + (i + 1) + '"]').children('.até').text()*1
+    if (primeiro < segundo) {
+       $('tr[dominio="' + i + '+' + (i + 1) + '"]').children('.de').text(primeiro)
+       $('tr[dominio="' + i + '+' + (i + 1) + '"]').children('.até').text(segundo)
+       $('tr[dominio="' + i + '"]').children('.de').text(segundo)
+       $('tr[dominio="' + (i + 1) + '"]').children('.até').text(primeiro)
+    } else {
+        $('tr[dominio="' + i + '+' + (i + 1) + '"]').children('.de').text("-")
+        $('tr[dominio="' + i + '+' + (i + 1) + '"]').children('.até').text("-")   
+    }
+    if ($('tr[dominio="' + i + '"]').children('.de').text()*1 >= $('tr[dominio="' + i + '"]').children('.até').text()*1) {
+        $('tr[dominio="' + i + '"]').addClass("neg_verm")
+    } else {
+        $('tr[dominio="' + i + '"]').removeClass("neg_verm")
+    }
+}
+ 
+//mistura das populações 1 e 2
+    //var elem = dados_stat_manipulados[elemSelec()]
+    populações[elemSelec()].pop_mix = {};
+    var pop = populações[elemSelec()].pop_mix;
+    pop.dados = [];
+    pop.probNormal = [];
+    pop.erro = 0;
+    pop.erro_absoluto = 0;
+    pop.vetor_erro = [];
+    
+    var elementos, probabilidadeNormal
+    if (elem().usar_hist) {
+        elementos = elem().dados_classes_hist
+        probabilidadeNormal = elem().probNormal_hist
+    } else {
+        elementos = elem().dados
+        probabilidadeNormal = elem().probNormal
+    }
+    
+    
+    for (var valor in elementos) {
+        let valor_y = elementos[valor]
+        let valor_x = probabilidadeNormal[valor]
+        let probNormalAcumulada = 0
+        //console.log(i + ": " + valor_y)
+        for (n = 1; n <= populações[elemSelec()].n_pop; n++) {
+            //console.log(n)
+            let subpop = populações[elemSelec()]["pop_" + n]
+            let z = (valor_y - subpop.média)/subpop.desviopadrão
+            //z > 4.42 ? z = 4.42 : z < -4.42 ? z = -4.42 : z = z
+            probNormalAcumulada += stdNormal(z)*subpop.n_proporcional
+        }
+        pop.dados.push(valor_y)
+        let probNormal = estat.probit(1 - probNormalAcumulada)
+        pop.probNormal.push(probNormal)
+        //console.log(pop.erro)
+        let erro = (probNormal - valor_x)
+        let erro_percentual = erro/valor_x
+        if (erro_percentual == Infinity || erro_percentual == -Infinity) {erro_percentual = 0}
+        pop.erro += Math.abs(erro_percentual)
+        pop.erro_absoluto += Math.abs(erro)
+        pop.vetor_erro.push([erro])
+        //console.log(erro)
+        
+    }
+
+    $("#erro_ajuste").text(Math.round(pop.erro_absoluto/elem().n*10000)/100)
+    //$("#erro_ajuste").text(Math.round(pop.erro/elem().n*10000)/100)
+ /*   for (i = 1; i < Object.keys(populações).length; i++) {
+        var pop_esc = populações[elemSelec()]["pop_" + i]
+        //console.log("pop_" + i + ": " + pop_esc.n_proporcional)
+        pop.dados = pop.dados.concat(pop_esc.distNormalAleatoria.splice(0,Math.round(pop_esc.n_proporcional*100)))
+    }
+    pop.dados = estat.sort(pop.dados,"desc");
+    pop.probNormal = pop.dados.map(function(x,i) {return estat.probit((i+1-0.375)/(pop.dados.length+0.25))});
+ */   
+    var dataset = juntar_arrays(pop.probNormal,pop.dados);
+
+    //seleciona os pontos só desta população e junta com os dados
+    var população = d3.select(".subpop")
+                      .selectAll(".pop_mix")
+                      .data(dataset);
+        //remove os pontos desnecessários
+        população.exit().remove()
+        //adiciona os pontos novos e atualiza os pontos antigos
+        população.enter()
+                  .append("circle")
+                  .attr("class", "pop_mix")
+                  .attr("r", 1.5)
+             .merge(população)
+                  .attr("cx", function(d) {
+                      return graf_config.xscale(d[0]);
+                  })
+                  .attr("cy", function(d) {
+                      return graf_config.yscale(d[1]);
+                  })         
+}
+    
+
+var drag_pop = d3.drag()
+  //.on('start', dragstarted)
+  .on('drag', dragged_pop)
+  //.on('end', dragended);
+
+var horizontal = false;
+function dragged_pop() {
+    var line = d3.select(this);
+    var n_pop = $(this).attr("n_pop")
+    //Verfica se a tecla Ctrl está pressionada: se não está, altera média (b), se está, altera o desvio padrão (a)
+    if (!teclas["17"]) {
+        var y = d3.event.dy;
+        var attributes = {
+          y1: +line.attr('y1') + y,
+          y2: +line.attr('y2') + y,
+        };
+
+        line.attr('y1', attributes.y1)
+            .attr('y2', attributes.y2);
+        var delta_escala = graf_config.yscale.invert(1)-graf_config.yscale.invert(0)
+        var delta_média = y * delta_escala;
+        console.log("dy: " + y + " // dy_esc: " + delta_média)
+        populações[elemSelec()]["pop_" + n_pop].média = populações[elemSelec()]["pop_" + n_pop].média + delta_média
+        $("#média_pop_" + n_pop).val(precisão(transformação(populações[elemSelec()]["pop_" + n_pop].média,elemSelec())))
+        calc_pop([[n_pop,populações[elemSelec()]["pop_" + n_pop].média,populações[elemSelec()]["pop_" + n_pop].desviopadrão]])
+    } else {
+        var b = populações[elemSelec()]["pop_" + n_pop].média
+        var y2 = d3.event.y
+        var x2 = d3.event.x
+        var a = -(graf_config.yscale.invert(y2) - b) / graf_config.xscale.invert(x2)
+        a < 0 && horizontal ? a = 0.000001 : (a < 0 && !horizontal ? a = 1000 : a = a)
+        
+        var coordenadas = {
+            x1: graf_config.xscale.range()[0],
+            x2: graf_config.xscale.range()[1]
+        }
+        coordenadas.y1 = graf_config.yscale(-graf_config.xscale.invert(coordenadas.x1)*a+b)
+        coordenadas.y2 = graf_config.yscale(-graf_config.xscale.invert(coordenadas.x2)*a+b)
+        
+        line.attr("x1", coordenadas.x1)
+            .attr("x2", coordenadas.x2)
+            .attr("y1", coordenadas.y1)
+            .attr("y2", coordenadas.y2);
+        
+        Math.abs(coordenadas.x2-coordenadas.x1) > Math.abs(coordenadas.y2-coordenadas.y1) ? horizontal = true : horizontal = false
+        
+        populações[elemSelec()]["pop_" + n_pop].desviopadrão = a
+        $("#dp_pop_" + n_pop).val(precisão(transformação(a,elemSelec(), "desvio padrão", "pop_" + n_pop)));
+        calc_pop([[n_pop,b,a]])
+    }
+}
+    
+var teclas = {};
+window.onkeyup = function(e) { delete teclas[e.keyCode]; }
+window.onkeydown = function(e) { teclas[e.keyCode] = true; }
+
+//Plotar gráfico usando as classes do histograma ao invés dos dados originais
+$("#usar_hist").change(function() {
+    if ($("#usar_hist").is(":checked")){
+            elem().usar_hist = true
+            pp_hist();
+            plotarGráfico(elem().probNormal_hist,elem().dados_classes_hist)
+    } else {
+            elem().usar_hist = false
+            plotarGráfico(elem().probNormal,elem().dados);
+    }
+});
+
+function pp_hist() {
+    //var elem = dados_stat_manipulados[elemSelec()]
+    
+    
+    //$("#num_slider").text(dados_stat_manipulados[elemSelec()].histograma_classes)    
+    //plotarHistograma(dados_stat_manipulados[elemSelec()].histograma_classes || 0.25);
+    
+    console.log("Bins:")
+    console.log(elem().bins)
+    
+    elem().dados_classes_hist = []
+    var dados_classes_2 = []
+    var dados_classes_1 = elem().bins.map(
+        function (num) {
+	       let x = num.length;
+	       elem().dados_classes_hist.push(num.x0 + (num.x1 - num.x0)/2)
+	       return x
+        }
+    )
+    
+    console.log("Classes hist gerados ^")
+    console.log(elem().dados_classes_hist)
+    
+    elem().dados_classes_hist_n = dados_classes_1
+    dados_classes_1.reduce(
+        function(Acumulador, valorAtual) {
+            dados_classes_2.push(valorAtual/2 + Acumulador)
+            return Acumulador + valorAtual;
+        }, 0)
+	console.log(dados_classes_2)
+    
+    elem().probNormal_hist = dados_classes_2.map(function(x) {return estat.probit((x+1-0.375)/(elem().n+0.25))})
+}
+    
+    
+
+
+//GERAR TABELA RESUMO
+function gerarTabelaResumo() {
+    var colunas = {
+                    valores: [
+                    "distribuição",
+                    "limite_inf",
+                    "grau_detecção",
+                    "abaixo_LD",
+                    "CV"
+                  ],
+                    dados:   [
+                    "média",
+                    "min",
+                    "q25",
+                    "mediana",
+                    "q75",
+                    "limiar_2ordem",
+                    "limiar_1ordem",
+                    "max"
+                 ]
+                 }
+        
+
+    $("tr.dados").remove()
+    for (var elemento in dados_stat_manipulados) {
+        if (dados_stat_manipulados.hasOwnProperty(elemento)) {
+            $("#resumo").append(
+                '<tr id="' + elemento + '" class="dados"><td>' + elemento + '</td></tr>'
+            )
+            
+            //Coloca os dados estatísticos que não são log-transformados
+             for (var propiedade in colunas.valores) {
+                var dado = dados_stat_manipulados[elemento][colunas.valores[propiedade]]
+                console.log(dado)
+                if (dado == undefined) {dado = "-"}
+                $("[id='" + elemento + "']").append(
+                estat.isNumeric(dado) ? '<td>' + é_o_LD(precisão(dado),elemento) + '</td>' : '<td>' + dado + '</td>'
+                )
+            }
+            
+            //Coloca os dados estatísitcos que podem ser log-transformados
+            for (var propiedade in colunas.dados) {
+                var dado = dados_stat_manipulados[elemento][colunas.dados[propiedade]]
+                if (dado == undefined) {dado = "-"}
+                $("[id='" + elemento + "']").append(
+                estat.isNumeric(dado) ? '<td>' + é_o_LD(precisão(transformação(dado,elemento)),elemento) + '</td>' : '<td>' + dado + '</td>'
+                )
+            }
+            
+            //Coloca o UCC
+            var dado = UCC[elemento]
+            var i = 5
+            while (dado == undefined && i > 0) {
+               dado = UCC[elemento.substr(0,i)]
+               i--
+            }
+            
+            if (dado == undefined) {
+                dado = "-"
+            }
+            $("#" + elemento.replace("%","\\%")).append('<td>' + dado + '</td>')
+                
+        }
+    }
+}
+    
+var UCC = {Au: '1,5 ppb', Ag: '53 ppb', Al: '8,15%', As: '4,8 ppm', Ba: '624 ppm', Be: '2,1 ppm', Bi: '0,16 ppm', Ca: '2,56%', Cd: '0,09 ppm', Ce: '63 ppm', Co: '17,3 ppm', Cr: '92 ppm', Cs: '4,9 ppm', Cu: '28 ppm', Fe: '3,92%', Ga: '17,5 ppm', Ge: '1,4 ppm', Hf: '5,3 ppm', Hg: '0,05 ppm', In: '0,056 ppm', K: '2,32%', La: '31 ppm', Li: '21 ppm', Lu: '0,31 ppm', Mg: '1,50%', Mn: '0,08%', Mo: '1,1 ppm', Na: '2,43%', Nb: '12 ppm', Ni: '47 ppm', P: '0,07%', Pb: '17 ppm', Rb: '84 ppm', Re: '0,198 ppb', S: '0,032 ppm', Sb: '0,4 ppm', Sc: '14 ppm', Se: '0,09 ppm', Sn: '2,1 ppm', Sr: '320 ppm', Ta: '0,9 ppm', Tb: '0,7 ppm', Te: ' - ', Th: '10,5 ppm', Ti: '0,38%', Tl: '0,9 ppm', U: '2,7 ppm', V: '97 ppm', W: '1,9 ppm', Y: '21 ppm', Yb: '2 ppm', Zn: '67 ppm', Zr: '193 ppm', Al2O3: '15,4 %', CaO: '3,59 %', FeO: '5,04 %', K2O: '2,8 %', MgO: '2,48 %', MnO: '0,1 %', Na2O: '3,27 %', P2O5: '0,15 %', TiO2: '0,64 %',}
+
+function precisão(número) {
+    if (número) {
+    var num_esq = (""+Math.abs(número)).indexOf(".")
+    switch (num_esq) {
+        case 2:
+            número = número.toFixed(2);
+            break;
+        case 1:
+            número = número.toPrecision(4);
+            break;
+        default:
+            número = número.toFixed(0)
+                   }
+        }
+    return número
+}
+    
+function é_o_LD (valor, elemento) {
+    valor_LD = dados_stat_manipulados[elemento].limite_inf
+    if (valor_LD == undefined) {
+        return valor
+    } else if (+valor !== valor_LD.replace("&lt;","").replace(",",".")/2){
+        return valor
+    } else {
+        return valor_LD
+    }
+}
+    
+function transformação (valor, elemento, desvio_padrão, pop) {
+    /*console.log({
+        valor: valor,
+        elemento: elemento,
+        desvio_padrão: desvio_padrão,
+        pop: pop,
+    })*/
+    if (desvio_padrão) {
+        if (dados_stat_manipulados[elemento].distribuição == "log") {
+            if (pop) {
+                return (Math.pow(10,populações[elemento][pop].média + valor) - Math.pow(10,populações[elemento][pop].média))
+            } else {
+                return (Math.pow(10,dados_stat_manipulados[elemento].média + valor) - Math.pow(10,dados_stat_manipulados[elemento].média))
+            }
+        } else {
+            return valor
+        }         
+    } else {
+        if (dados_stat_manipulados[elemento].distribuição == "log") {
+            return Math.pow(10,valor)
+        } else {
+            return valor
+        }        
+    }
+
+}
+
+
+function salvar_como() {
+    let cabeçalhos = [];
+    let tabela = $('#tab').jexcel('getData', false);
+    var n_col = tabela[0].length;
+    var i = 0;
+    for (i = 0; i < n_col; i++) {
+        var x = $('#tab').jexcel('getHeader', i).replace('<span class="arrow-up"></span>','').replace('<span class="arrow-down"></span>','')
+        cabeçalhos.push(x)
+    }
+    
+    var dados_a_salvar = {
+        tipo: "arquivo geoestatísticas",
+        dados_stat: dados_stat,
+        dados_stat_manipulados: dados_stat_manipulados,
+        populações: populações,
+        cabeçalhos: cabeçalhos,
+        dados_tabela: tabela,
+        metadados: estat.columns,
+        missing_data: missing_data,
+    }
+    
+    //downloadObjectAsJson(dados_a_salvar, prompt("Nome do arquivo (sem extensão). O arquivo será salvo na pasta padrão de Downloads"))
+    downloadObjectAsJson(dados_a_salvar, prompt("File name (without extension). The file will be saved to your default Downloads folder."))
+}
+    
+    
+function downloadObjectAsJson(exportObj, exportName){
+    $("#nome_arquivo").text(exportName + ".json")
+    var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+    var downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href",     dataStr);
+    downloadAnchorNode.setAttribute("download", exportName + ".json");
+    document.body.appendChild(downloadAnchorNode); // required for firefox
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+  }
+    
+var arquivoSelect = document.getElementById("arquivoSelect"),
+    arquivoElem = document.getElementById("abrir_arquivo")
+
+arquivoSelect.addEventListener("click", function (e) {
+  if (arquivoElem) {
+    arquivoElem.click();
+  }
+  e.preventDefault();
+}, false);
+    
+function loadFile() {
+    var input, file, fr;
+
+    if (typeof window.FileReader !== 'function') {
+      alert("The file API isn't supported on this browser yet.");
+      return;
+    }
+
+    input = document.getElementById('abrir_arquivo');
+    if (!input) {
+      alert("Um, couldn't find the fileinput element.");
+    }
+    else if (!input.files) {
+      alert("This browser doesn't seem to support the `files` property of file inputs.");
+    }
+    else if (!input.files[0]) {
+      alert("Select a file to open.");
+    }
+    else {
+      file = input.files[0];
+      fr = new FileReader();
+      fr.onload = receivedText;
+      fr.readAsText(file);
+      $("#nome_arquivo").text(file.name)
+    }
+
+    function receivedText(e) {
+      let lines = e.target.result;
+      var newArr = JSON.parse(lines);
+        arquivoElem.value = ""
+        if (newArr.tipo == "arquivo geoestatísticas") {abrir_arquivo(newArr)}
+        //else {return alert("O arquivo selecionado não é compatível.")}
+        else {return alert("The selected file is not compatible. Select a JSON file generated by PPlot.")}
+     
+    }
+}
+    
+function abrir_arquivo(dados_salvos,exemplo){
+    console.log(dados_salvos)
+        dados_stat = dados_salvos.dados_stat;
+        dados_stat_manipulados = dados_salvos.dados_stat_manipulados;
+        metadados = dados_salvos.metadados;
+        populações = dados_salvos.populações;
+        missing_data = dados_salvos.missing_data
+        $("#missing_data").val(missing_data)
+        
+        $("#tab").jexcel('destroy');
+        $("#tab").jexcel({
+            data: dados_salvos.dados_tabela,
+            colHeaders: dados_salvos.cabeçalhos,
+        });
+        
+        estat = new Statistics(dados_stat, metadados);
+        $("#selecionar_elemento").empty();
+        dados_salvos.cabeçalhos.map(function(x){$("#selecionar_elemento").append("<option value='" + x + "'>" + x + "</option>")});
+    
+        $(".menu_item").removeClass("menu_ativo")
+        $("#arquivoSelect").addClass("menu_ativo")
+            $(".conteudo").children().hide();
+            if (exemplo) {
+                $("#graficos").show()
+                abrir_elemento()
+            } else {
+                $("#carregar_dados").show()
+            };
+}
+    
+$(".salvar").on( "click", function() {
+    svgsaver.asSvg(document.querySelector('#' + $(this).attr("grafico") + ' svg'))
+})
+    
+var fran;
+
+
+      fran = new Worker("webworker.js");
+    fran.onmessage = function(e){
+        barra_progresso(e.data.progresso)
+        if (e.data.status == "finalizado") {
+            $('#tab').jexcel('setData', e.data.tabela, true)
+            if (e.data.LDs != {}) {LDs = e.data.LDs}
+            aguarde_processando(false)
+        }
+    }
+
+
+function stopWorker() { 
+  fran.terminate();
+  fran = undefined;
+}
+    
+//Atualiza a barra de progresso para a porcentagem especificada
+function barra_progresso(porcentagem) {
+    $(".bar").css('width', porcentagem + "%")
+    $("#progresso").text(Math.round(porcentagem) + "%")
+}
+    
+
+var svgsaver = new SvgSaver();
+    
+    
+function objetivoComSensitividade (matriz_parâmetros, vetor_erro) {
+    var S = matriz_parâmetros
+    var E = vetor_erro
+    var S_transposta = matrixTranspose(S)
+    var A = matrixMultiply(S_transposta,S)
+    var A_inv = matrixInvert(A)
+    if (A_inv){
+        var delta_parâmetros = matrixMultiply(matrixMultiply(A_inv,S_transposta),E)       
+    } else {
+        var delta_parâmetros = false
+    }
+
+    return delta_parâmetros
+}
+    
+
+    
+function matrizParâmetros (delta) {
+    var matrizParâmetros = []
+    var delta = delta
+    var pop = populações[elemSelec()].pop_mix;
+
+    var elementos, probabilidadeNormal
+    if (elem().usar_hist) {
+        elementos = elem().dados_classes_hist
+        //probabilidadeNormal = elem().probNormal_hist
+    } else {
+        elementos = elem().dados
+        //probabilidadeNormal = elem().probNormal
+    }
+    probabilidadeNormal = populações[elemSelec()].pop_mix.probNormal
+    var n_pop = populações[elemSelec()].n_pop
+    var matriz_delta = [];
+    
+  for (n = 0; n < (3*n_pop - 1); n++) { //criando matriz identidade com o delta na diagonal
+//    for (n = 4; n < 6; n++) {
+        let vetor = []
+        for (j = 0; j < (3*n_pop - 1); j++) {
+            vetor.push(0)
+            if (n == j) {vetor[j] = delta}
+        }
+        matriz_delta.push(vetor)
+    }
+    
+    //console.log(matriz_delta)
+
+  for (j = 0; j < (3*n_pop - 1); j++) {
+//    for (j = 0; j < 2; j++) {
+        var vetor_diferença = []
+        let cópia_inflexões = {}
+        for (i = 1; i < n_pop; i++) {
+            cópia_inflexões["inf_" + i] = +populações[elemSelec()].inflexões["inf_" + i] + matriz_delta[j][2*n_pop + i - 1]
+        }
+        //console.log(cópia_inflexões)
+        for (var valor in elementos) {
+            let valor_y = elementos[valor]
+            let valor_x = probabilidadeNormal[valor]
+            let probNormalAcumulada = 0
+            for (n = 0; n < n_pop; n++) {
+                let subpop = populações[elemSelec()]["pop_" + (n + 1)]
+                let z = (valor_y - (subpop.média + matriz_delta[j][n*2]))/(subpop.desviopadrão + matriz_delta[j][n*2 + 1])
+                z > 4.42 ? z = 4.42 : z < -4.42 ? z = -4.42 : z = z
+                //console.log(z)
+                let n_proporcional = (stdNormal(cópia_inflexões["inf_" + (1 + n)]) || 1) - (stdNormal(cópia_inflexões["inf_" + n]) || 0)
+                //console.log("n_prop " + (1+n) + ": " + n_proporcional)
+                probNormalAcumulada += stdNormal(z)*n_proporcional
+
+            }
+            let probNormal = estat.probit(1 - probNormalAcumulada)
+            vetor_diferença.push((probNormal - valor_x)/delta)
+        }
+        matrizParâmetros.push(vetor_diferença)
+    }
+    matrizParâmetros = matrixTranspose(matrizParâmetros)
+    return matrizParâmetros
+}
+    
+   
+function otimizar_com_gráfico (limite,delta) {
+    aguarde_processando(true)
+    setTimeout(function(){
+            if (!limite) {limite = 20}
+    if (!delta) {delta = 1E-6}
+    var n_pop = populações[elemSelec()].n_pop
+    var matriz_subpopulações = []
+    for (n = 0; n < n_pop; n++) {
+            let subpop = populações[elemSelec()]["pop_" + (n + 1)]
+            matriz_subpopulações.push([n + 1, +subpop.média, +subpop.desviopadrão])
+    }
+    var objeto_inflexões = {}
+    for (n = 1; n < n_pop; n++) {
+        objeto_inflexões["inf_" + n] = populações[elemSelec()].inflexões["inf_" + n]
+    }
+    var ultima_interação = {erro: populações[elemSelec()].pop_mix.erro,
+                        matriz: matriz_subpopulações,
+                        objeto: objeto_inflexões,}
+    var resultados_otimizados = [ultima_interação]
+    var erros = [ultima_interação.erro]
+    for (let i = 0; i < limite; i++) {
+        var delta_parâmetro = objetivoComSensitividade(matrizParâmetros(delta), populações[elemSelec()].pop_mix.vetor_erro)
+        if (delta_parâmetro) {
+            matriz_subpopulações = []
+            for (n = 0; n < n_pop; n++) {
+                let subpop = populações[elemSelec()]["pop_" + (n + 1)]
+                matriz_subpopulações.push([n + 1, +subpop.média - (delta_parâmetro[n*2]*1 || 0), +subpop.desviopadrão - (delta_parâmetro[n*2 + 1]*1 || 0)])
+            }
+
+            let inflexões_para_ordenar = []
+            for (n = 1; n < n_pop; n++) {
+                inflexões_para_ordenar.push(+populações[elemSelec()].inflexões["inf_" + n] - (delta_parâmetro[n_pop*2 + n - 1]*1 || 0))
+            }
+            inflexões_para_ordenar = estat.sort(inflexões_para_ordenar)
+            objeto_inflexões = {}
+            for (n = 1; n < n_pop; n++) {
+                objeto_inflexões["inf_" + n] = inflexões_para_ordenar[n - 1]
+            }
+            
+            //console.log(delta_parâmetro + " : " + matriz_subpopulações)
+            //console.log(objeto_inflexões)
+            calc_pop(matriz_subpopulações, "", objeto_inflexões, true)
+            erros.push(populações[elemSelec()].pop_mix.erro)
+            ultima_interação = {erro: populações[elemSelec()].pop_mix.erro,
+                            matriz: matriz_subpopulações,
+                            objeto: objeto_inflexões,}
+            resultados_otimizados.push(ultima_interação)
+        /*        if (populações[elemSelec()].pop_mix.erro > ultima_interação.erro) {
+                calc_pop(ultima_interação.matriz, "", ultima_interação.objeto)
+                alert("otimizado em " + i +" interações.")
+            //    break
+            } else {
+                      ultima_interação = {erro: populações[elemSelec()].pop_mix.erro,
+                                          matriz: matriz_subpopulações,
+                                          objeto: objeto_inflexões}  
+            }*/
+        } else {break}
+    console.log("Interações realizadas: " + (+i+1))
+    }
+
+    let melhor_resultado = erros.indexOf(Math.min(...erros))
+    calc_pop(resultados_otimizados[melhor_resultado].matriz, "", resultados_otimizados[melhor_resultado].objeto, false)
+        console.log("Otimização finalizada")
+    aguarde_processando(false)
+    }, 20)
+}
+    
+    
+function varredura () {
+    aguarde_processando(true)
+    setTimeout(function(){
+            let inflexões_determinadas = []
+    let erro_anterior = Infinity
+    let resultado = {inflexões: [],
+                    erro: []}
+    for (let j = 2; j < 6; j++) {
+        console.log("Varredura " + (+j-1) + " iniciada")
+        let erros_varredura = []
+        let array_pop = gerar_array_pop(j)
+        $("#n_subpop").val(j)
+        gerarVagasSubpopulação()
+        for (let i = 1; i < 100; i++){
+            if (inflexões_determinadas.indexOf(estat.probit(i/100)) == -1) {
+                let inflexões_varredura = []
+                inflexões_varredura = inflexões_varredura.concat(inflexões_determinadas)
+                inflexões_varredura.push(estat.probit(i/100))
+                inflexões_varredura = estat.sort(inflexões_varredura)
+                for (let k = 1; k < j; k++) {
+                    populações[elemSelec()].inflexões["inf_" + k] = inflexões_varredura[k-1]
+                }
+                calc_pop(array_pop)
+                erros_varredura.push(populações[elemSelec()].pop_mix.erro_absoluto || Infinity)
+            } else {
+                erros_varredura.push(Infinity)
+            }
+        }
+        //console.log(erros_varredura)
+        let erro_atual = Math.min(...erros_varredura)
+        let delta_erro_percentual = Math.abs((erro_atual - erro_anterior)/erro_anterior)
+        if (delta_erro_percentual < 0.1) {break}
+        inflexões_determinadas.push(estat.probit((erros_varredura.indexOf(erro_atual) + 1)/100))
+        inflexões_determinadas = estat.sort(inflexões_determinadas)
+        console.log(inflexões_determinadas)
+        let objeto_inflexões = {}
+        for (let inf in inflexões_determinadas) {
+            objeto_inflexões["inf_" + (+inf + 1)] = inflexões_determinadas[inf]
+        }
+        calc_pop(array_pop,"",objeto_inflexões)
+        //console.log("Otimização " + (+j-1) + " iniciada")
+        otimizar_com_gráfico(10,1e-6)
+        //console.log("Otimização " + (+j-1) + " finalizada")
+        inflexões_determinadas = []
+        let n_pop = populações[elemSelec()].n_pop
+        for (n = 1; n < n_pop; n++) {
+                inflexões_determinadas.push(populações[elemSelec()].inflexões["inf_" + n])
+        }
+        erro_anterior = populações[elemSelec()].pop_mix.erro_absoluto
+        resultado.inflexões.push(inflexões_determinadas)
+        resultado.erro.push(populações[elemSelec()].pop_mix.erro_absoluto)
+        console.log(resultado)
+        console.log("Varredura " + (+j-1) + " finalizada")
+    }
+    //pegar as inflexões determinadas e agregar as que são prómixas entre si para reduzir o número
+    inflexões_determinadas = estat.sort(inflexões_determinadas)
+    let z = [[inflexões_determinadas[0]]]
+    let grupo = 0
+    for (let a = 1; a < inflexões_determinadas.length; a++) {
+        if (Math.abs(inflexões_determinadas[a] - inflexões_determinadas[a-1]) < 0.15) {
+            z[grupo].push(inflexões_determinadas[a])
+            console.log("Agregadas inflexões: " + a + " e " + (a-1))
+        } else {
+            grupo++
+            z.push([inflexões_determinadas[a]])
+        }
+    }
+    console.log(z)
+    inflexões_determinadas = z.map(x => estat.mean(x))
+    console.log(inflexões_determinadas)
+    $("#n_subpop").val(inflexões_determinadas.length + 1)
+    gerarVagasSubpopulação()
+    for (let inf in inflexões_determinadas) {
+        populações[elemSelec()].inflexões["inf_" + (+inf + 1)] = inflexões_determinadas[inf]
+        mover_inflexão(+inf + 1)
+    }
+    calc_pop(gerar_array_pop(populações[elemSelec()].n_pop))
+    //otimizar_com_gráfico(10,1e-6) 
+    aguarde_processando(false)
+    }, 20)
+}
+   
+function gerar_array_pop(j) {
+        let x = []
+        for (let k = 1; k < (j + 1); k++) {
+            x.push([k])
+        }
+    return x
+}
+    
+    
+function mover_inflexão (inf_selec) {
+        var inflexão_valor = populações[elemSelec()].inflexões["inf_" + inf_selec]
+        $(".inflexão_valor[n_inflexão=" + inf_selec + "]").val(stdNormal(inflexão_valor)*100);
+        var coordx = graf_config.xscale(inflexão_valor) + margins.left;
+        if (d3.selectAll("line[n_inflexão='" + inf_selec + "']").empty()) {
+            d3.select("svg").append("line")
+                               .attr("class", "inflexão")
+                               .attr("n_inflexão", inf_selec)
+                               .attr("x1", coordx)
+                               .attr("x2", coordx)
+                               .attr("y1", margins.top)
+                               .attr("y2", h - margins.bottom)
+                               .call(drag);
+        } else {
+            d3.selectAll("line[n_inflexão='" + inf_selec + "']").transition()
+                           .attr("x1", coordx)
+                           .attr("x2", coordx)
+        }
+}
+    
+
+    
+function normal(x, mu, sigma) {
+    return stdNormal((x-mu)/sigma);
+}
+
+function stdNormal(z) {
+    var j, k, kMax, m, values, total, subtotal, item, z2, z4, a, b;
+
+    // Power series is not stable at these extreme tail scenarios
+    if (z < -6) { return 0; }
+    if (z >  6) { return 1; }
+
+    m      = 1;        // m(k) == (2**k)/factorial(k)
+    b      = z;        // b(k) == z ** (2*k + 1)
+    z2     = z * z;    // cache of z squared
+    z4     = z2 * z2;  // cache of z to the 4th
+    values = [];
+
+    // Compute the power series in groups of two terms.
+    // This reduces floating point errors because the series
+    // alternates between positive and negative.
+    for (k=0; k<100; k+=2) {
+        a = 2*k + 1;
+        item = b / (a*m);
+        item *= (1 - (a*z2)/((a+1)*(a+2)));
+        values.push(item);
+        m *= (4*(k+1)*(k+2));
+        b *= z4;
+    }
+
+    // Add the smallest terms to the total first that
+    // way we minimize the floating point errors.
+    total = 0;
+    for (k=49; k>=0; k--) {
+        total += values[k];
+    }
+
+    // Multiply total by 1/sqrt(2*PI)
+    // Then add 0.5 so that stdNormal(0) === 0.5
+    return 0.5 + 0.3989422804014327 * total;
+} 
+
+    
+function aguarde_processando(ligar){
+    if (ligar) {
+        $(".processando").css("display", "flex")
+    } else {
+        $(".processando").css("display", "none")
+    }
+}
+    
+
+
+
+</script>
+
+</body>
+</html>
